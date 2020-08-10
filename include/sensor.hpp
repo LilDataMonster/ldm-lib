@@ -7,9 +7,9 @@ namespace LDM {
 class Sensor {
 public:
     // sensors must implement the following functions
-    virtual bool init(void) = 0;
-    virtual bool deinit(void) = 0;
-    virtual bool readSensor(void) = 0;
+    virtual esp_err_t init(void) = 0;
+    virtual esp_err_t deinit(void) = 0;
+    virtual esp_err_t readSensor(void) = 0;
     virtual cJSON *buildJson(void) = 0;
 };
 }
