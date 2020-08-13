@@ -2,13 +2,9 @@
 #include <esp_log.h>
 #include <nvs_flash.h>
 
-#include <sys/time.h>
-
 #include <nvs.hpp>
 
 #define TAG "LDM-NVS"
-
-RTC_DATA_ATTR struct timeval LDM::NVS::sleep_enter_time;
 
 LDM::NVS::NVS(nvs_handle_t nvs_h) {
     if(nvs_h != -1) {
@@ -30,32 +26,6 @@ esp_err_t LDM::NVS::initDefault(void) {
     ESP_ERROR_CHECK(ret);
 
     return ret;
-}
-
-esp_sleep_source_t LDM::NVS::getWakeupCause(void) {
-
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    const int sleep_time_ms = (now.tv_sec - sleep_enter_time.tv_sec) * 1000 + (now.tv_usec - sleep_enter_time.tv_usec) / 1000;
-
-    esp_sleep_source_t cause = esp_sleep_get_wakeup_cause();
-    switch(cause) {
-        case ESP_SLEEP_WAKEUP_TIMER: {
-            ESP_LOGI(TAG, "Wake up from timer. Time spent in deep sleep: %dms", sleep_time_ms);
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_ULP: {
-            ESP_LOGI(TAG, "ESP_SLEEP_WAKEUP_ULP");
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_UNDEFINED: {
-            ESP_LOGI(TAG, "Wakeup was not caused by deep sleep");
-            break;
-        }
-        default:
-            ESP_LOGI(TAG, "Not a deep sleep reset");
-    }
-    return cause;
 }
 
 esp_err_t LDM::NVS::openNamespace(const char* ns, nvs_open_mode_t mode) {

@@ -2,14 +2,12 @@
 #define __SYSTEM_HPP__
 
 #include <nvs_flash.h>
-#include <esp_sleep.h>
 
 namespace LDM {
 class NVS {
 public:
     NVS(nvs_handle_t nvs_h=-1);
     esp_err_t initDefault(void);
-    esp_sleep_source_t getWakeupCause(void);
 
     // NVS Setup
     esp_err_t openNamespace(const char* ns, nvs_open_mode_t mode=NVS_READWRITE);
@@ -53,10 +51,6 @@ private:
     esp_err_t setupNVS(void);
 
     nvs_handle_t nvs_h;
-
-    // set RTC memory
-    static RTC_DATA_ATTR struct timeval sleep_enter_time;
-
 };
 }
 
