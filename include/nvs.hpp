@@ -13,7 +13,7 @@ public:
     esp_err_t openNamespace(const char* ns, nvs_open_mode_t mode=NVS_READWRITE);
     esp_err_t commit(void);
     void close(void);
-/*
+
     // could probably use templates for this
     esp_err_t setKeyU8(const char *key, uint8_t value);
     esp_err_t getKeyU8(const char *key, uint8_t *value);
@@ -42,10 +42,6 @@ public:
     esp_err_t eraseNVSAllKeys(void);
 
     esp_err_t getStats(const char *part_name, nvs_stats_t *nvs_stats);
-*/
-    // virtual esp_err_t deinit(void) = 0;
-    // virtual esp_err_t readSensor(void) = 0;
-    // virtual cJSON *buildJson(void) = 0;
 
 private:
     esp_err_t setupNVS(void);
