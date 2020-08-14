@@ -16,13 +16,13 @@ public:
         esp_bt_controller_disable
         esp_wifi_stop
     */
-    static void enterDeepSleepUs(uint64_t timeMicrosec);
-    static void enterDeepSleepS(uint64_t timeSec);
+    static void enterDeepSleepUsec(uint64_t timeMicrosec);
+    static void enterDeepSleepSec(uint64_t timeSec);
 
 
     // Light Sleep
     //TODO
-    
+
 private:
     // set RTC memory
     static RTC_DATA_ATTR struct timeval sleep_enter_time;

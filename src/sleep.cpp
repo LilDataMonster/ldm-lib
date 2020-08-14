@@ -38,7 +38,7 @@ esp_sleep_source_t LDM::Sleep::getWakeupCause(void) {
     return cause;
 }
 
-void LDM::Sleep::enterDeepSleepUs(uint64_t timeMicrosec) {
+void LDM::Sleep::enterDeepSleepUsec(uint64_t timeMicrosec) {
     // Call to this function is equivalent to a call to
     // esp_deep_sleep_enable_timer_wakeup followed
     // by a call to esp_deep_sleep_start.
@@ -46,6 +46,6 @@ void LDM::Sleep::enterDeepSleepUs(uint64_t timeMicrosec) {
     esp_deep_sleep(timeMicrosec);
 }
 
-void LDM::Sleep::enterDeepSleepS(uint64_t timeSec) {
-    LDM::Sleep::enterDeepSleepUs(timeSec * 1E6);
+void LDM::Sleep::enterDeepSleepSec(uint64_t timeSec) {
+    LDM::Sleep::enterDeepSleepUsec(timeSec * 1E6);
 }
