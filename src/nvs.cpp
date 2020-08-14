@@ -58,6 +58,7 @@ void LDM::NVS::close(void) {
     nvs_close(this->nvs_h);
 }
 
+/*
 esp_err_t LDM::NVS::getKeyU8(const char *key, uint8_t *value) {
     esp_err_t ret = nvs_get_u8(nvs_h, key, value);
     switch(ret) {
@@ -572,3 +573,4 @@ esp_err_t LDM::NVS::getStats(const char *part_name, nvs_stats_t *nvs_stats) {
     }
     return ret;
 }
+*/
