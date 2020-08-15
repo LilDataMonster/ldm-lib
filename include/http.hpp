@@ -17,7 +17,8 @@ public:
     esp_http_client_handle_t getClient(void) {
         return this->client;
     }
-    esp_err_t postJSON(cJSON *message);
+    esp_err_t postJSON(cJSON *message, size_t size=0);
+    esp_err_t postFormattedJSON(char *message);
     esp_err_t deinit(void) {
         return esp_http_client_cleanup(this->client);
     }

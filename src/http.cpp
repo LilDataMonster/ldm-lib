@@ -23,32 +23,54 @@ LDM::HTTP::HTTP(char* URL) {
     this->client = esp_http_client_init(&this->config);
 }
 
-esp_err_t LDM::HTTP::postJSON(cJSON *message) {
+esp_err_t LDM::HTTP::postJSON(cJSON *message, size_t size) {
     ESP_LOGI(HTTP_TAG, "Running post_json");
     esp_err_t err = ESP_OK;
 
-    if(message != NULL){
-        char *post_data = cJSON_Print(message);
+    if(message != NULL) {
 
-        if(post_data != NULL){
-            ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", post_data);
-
-            esp_http_client_set_method(this->client, HTTP_METHOD_POST);
-            esp_http_client_set_header(this->client, "Content-Type", "application/json");
-            esp_http_client_set_post_field(this->client, post_data, strlen(post_data));
-
-            // post JSON message
-            err = esp_http_client_perform(this->client);
-            if (err == ESP_OK) {
-                ESP_LOGI(HTTP_TAG, "HTTP POST Status = %d, content_length = %d",
-                        esp_http_client_get_status_code(this->client),
-                        esp_http_client_get_content_length(this->client));
-            } else {
-                ESP_LOGE(HTTP_TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
-            }
-            cJSON_free((void*)post_data);
-            post_data = NULL;
+        char *post_data = NULL;
+        if(size == 0) {
+            post_data = cJSON_Print(message);
+        } else {
+            post_data = cJSON_PrintBuffered(message, size, 1);
+            // post_data = (char*)malloc(sizeof(char)*size);
+            // cJSON_PrintPreallocated(message, post_data, size, 1);
         }
+        
+        // post data
+        this->postFormattedJSON(post_data);
+
+        // free memory
+        cJSON_free((void*)post_data);
+        post_data = NULL;
+    } else {
+        ESP_LOGE(HTTP_TAG, "JSON Message is NULL");
+    }
+    return err;
+}
+
+esp_err_t LDM::HTTP::postFormattedJSON(char *message) {
+    esp_err_t err = ESP_OK;
+
+    ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
+
+    if(message != NULL) {
+        esp_http_client_set_method(this->client, HTTP_METHOD_POST);
+        esp_http_client_set_header(this->client, "Content-Type", "application/json");
+        esp_http_client_set_post_field(this->client, message, strlen(message));
+
+        // post JSON message
+        err = esp_http_client_perform(this->client);
+        if (err == ESP_OK) {
+            ESP_LOGI(HTTP_TAG, "HTTP POST Status = %d, content_length = %d",
+                    esp_http_client_get_status_code(this->client),
+                    esp_http_client_get_content_length(this->client));
+        } else {
+            ESP_LOGE(HTTP_TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+        }
+    } else {
+        ESP_LOGE(HTTP_TAG, "Formatted Message is NULL");
     }
     return err;
 }
