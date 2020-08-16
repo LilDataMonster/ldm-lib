@@ -10,6 +10,7 @@ idf_component_register(
     INCLUDE_DIRS include
     REQUIRES bt
              json
+             app_update
              esp-tls
              esp_http_client
              esp_https_ota
