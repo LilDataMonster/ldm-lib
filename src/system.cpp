@@ -215,8 +215,8 @@ cJSON* LDM::System::buildJson(void) {
     cJSON_AddStringToObject(json_part_info, "label", this->partition->label);
     cJSON_AddItemToObject(json_part_info, "encrypted", cJSON_CreateBool(this->partition->encrypted));
 
-    char* output = cJSON_Print(json_root);
-    printf("%s", output);
+    // char* output = cJSON_Print(json_root);
+    // printf("%s", output);
 
     return json_root;
 }
