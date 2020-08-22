@@ -104,7 +104,6 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
     switch (event) {
     case ESP_BLUFI_EVENT_INIT_FINISH:
         ESP_LOGI(TAG, "BluFi init finish");
-        esp_ble_gap_set_device_name("TEST");
         esp_ble_gap_config_adv_data(&LDM::BLE::default_blufi_adv_data);
         break;
     case ESP_BLUFI_EVENT_DEINIT_FINISH:
