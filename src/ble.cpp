@@ -1,306 +1,363 @@
-#include <cstdlib>
-#include <string>
 #include <cstring>
 
 #include <esp_log.h>
-
-#ifndef CONFIG_IDF_TARGET_ESP32S2
-#include <esp_bt.h>
 #include <esp_gap_ble_api.h>
 #include <esp_gatts_api.h>
-#include <esp_bt_defs.h>
-#include <esp_bt_main.h>
+#include <esp_blufi_api.h>
+#include <esp_wifi.h>
 
-// project headers
+#include <bluetooth.hpp>
 #include <ble.hpp>
 
-#define PROFILE_A_APP_ID 0
+#define TAG "LDM:BLE"
 
-#define BLE_TAG "BLE"
-#define GATTS_TAG "GATTS"
+#define ERR_CHECK(_x, _msg) \
+if(_x != ESP_OK) {\
+    ESP_LOGE(TAG, "%s "#_msg": %s\n", __func__, esp_err_to_name(err));\
+    return err;\
+}
 
-#define adv_config_flag      (1 << 0)
-#define scan_rsp_config_flag (1 << 1)
+// define statics
+// set default device name
+bool LDM::BLE::connected = false;
+char* LDM::BLE::device_name = const_cast<char*>("LDM_Device");
 
-uint8_t LDM::BLE::manufacturer_data[MANUFACTURER_DATA_LEN] =  {
-    'T', 'H', 0x00, 0x00,// 0x01, 0x02, 0x03, 0x04,
-};
+// BluFi profile default callback info
+wifi_config_t LDM::BLE::sta_config;
+wifi_config_t LDM::BLE::ap_config;
+uint8_t LDM::BLE::server_if;
+uint16_t LDM::BLE::conn_id;
 
-// define static member variables
-std::string LDM::BLE::device_name = "Device";
-uint8_t LDM::BLE::adv_config_done = 0;
-struct gatts_profile_inst LDM::BLE::gl_profile_tab[PROFILE_NUM] = {
-    [PROFILE_A_APP_ID] = {
-        .gatts_cb = gatts_profile_a_event_handler,
-        .gatts_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
-    },
-};
+// BluFi profile: store the station info for send back to phone
+bool LDM::BLE::gl_sta_connected;
+bool LDM::BLE::ble_is_connected;
+uint8_t LDM::BLE::gl_sta_bssid[6];
+uint8_t LDM::BLE::gl_sta_ssid[32];
+int LDM::BLE::gl_sta_ssid_len;
+esp_ble_adv_data_t LDM::BLE::default_blufi_adv_data;
+esp_ble_adv_params_t LDM::BLE::default_blufi_adv_params;
 
-esp_ble_adv_data_t LDM::BLE::adv_data = {
-    .set_scan_rsp = false,
-    .include_name = true,
-    .include_txpower = false,
-    // .min_interval = 0x0006, //slave connection min interval, Time = min_interval * 1.25 msec
-    // .max_interval = 0x0010, //slave connection max interval, Time = max_interval * 1.25 msec
-    .appearance = 0xFF,
-    // .manufacturer_len = 0, //TEST_MANUFACTURER_DATA_LEN,
-    .manufacturer_len = MANUFACTURER_DATA_LEN,
-    .p_manufacturer_data = &manufacturer_data[0],
-    .service_data_len = MANUFACTURER_DATA_LEN,
-    .p_service_data = &manufacturer_data[0],
-    .service_uuid_len = sizeof(adv_service_uuid128),
-    .p_service_uuid = adv_service_uuid128,
-    .flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT),
-};
-
-esp_ble_adv_data_t LDM::BLE::scan_rsp_data = {
-    .set_scan_rsp = true,
-    .include_name = true,
-    .include_txpower = true,
-    //.min_interval = 0x0006,
-    //.max_interval = 0x0010,
-    .appearance = 0xFF,
-    // .manufacturer_len = 0, //TEST_MANUFACTURER_DATA_LEN,
-    // .p_manufacturer_data =  NULL, //&test_manufacturer[0],
-    .manufacturer_len = MANUFACTURER_DATA_LEN,
-    .p_manufacturer_data = &manufacturer_data[0],
-    .service_data_len = MANUFACTURER_DATA_LEN,
-    .p_service_data = &manufacturer_data[0],
-    .service_uuid_len = sizeof(adv_service_uuid128),
-    .p_service_uuid = adv_service_uuid128,
-    .flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT),
-};
-
-uint8_t LDM::BLE::adv_service_uuid128[32] = {
-    /* LSB <--------------------------------------------------------------------------------> MSB */
-    //first uuid, 16bit, [12],[13] is the value
-    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xCC, 0xDD, 0x00, 0x00,
-    //second uuid, 32bit, [12], [13], [14], [15] is the value
-    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xAA, 0x22, 0x00, 0x00,
-};
-
-// define BLE functions
-LDM::BLE::BLE(std::string deviceName) {
-    LDM::BLE::device_name = deviceName;
-
-    ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
-
-    // setup default bluetooth configuration
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-
-    esp_err_t status = esp_bt_controller_init(&bt_cfg);
-    if(status) {
-        ESP_LOGE(BLE_TAG, "%s initialize controller failed: %s\n", __func__, esp_err_to_name(status));
-        return;
-    }
-    status |= esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    if(status) {
-        ESP_LOGE(BLE_TAG, "%s enable controller failed: %s\n", __func__, esp_err_to_name(status));
-        return;
-    }
+// Bluetooth in BLE Mode
+LDM::BLE::BLE(char* device_name) : Bluetooth(device_name) {
+    // set device name
+    LDM::BLE::device_name = device_name;
+    LDM::BLE::connected = false;
 }
 
 esp_err_t LDM::BLE::init(void) {
+    // initialize bluetooth in BLE mode
+    // esp_err_t err = bluetooth.init(ESP_BT_MODE_BLE);
+    esp_err_t err = LDM::Bluetooth::init(ESP_BT_MODE_BLE);
+    ERR_CHECK(err, "Error initializing bluetooth");
 
-    esp_err_t status = esp_bluedroid_init();
-    if(status) {
-        ESP_LOGE(BLE_TAG, "%s init bluetooth failed: %s\n", __func__, esp_err_to_name(status));
-        return status;
-    }
-    status |= esp_bluedroid_enable();
-    if(status) {
-        ESP_LOGE(BLE_TAG, "%s enable bluetooth failed: %s\n", __func__, esp_err_to_name(status));
-        return status;
-    }
-    return status;
+    err |= esp_ble_gap_set_device_name(this->device_name);
+    ERR_CHECK(err, "Error setting BLE device name");
+
+    return err;
 }
 
 esp_err_t LDM::BLE::deinit(void) {
-
-    esp_err_t status = esp_bluedroid_disable();
-    if(status) {
-        ESP_LOGE(BLE_TAG, "%s disable bluetooth failed: %s\n", __func__, esp_err_to_name(status));
-        return status;
-    }
-    status |= esp_bluedroid_deinit();
-    if(status) {
-        ESP_LOGE(BLE_TAG, "%s deinit bluetooth failed: %s\n", __func__, esp_err_to_name(status));
-        return status;
-    }
-    return status;
+    esp_err_t err = LDM::Bluetooth::deinit();
+    ERR_CHECK(err, "Error deinitializing bluetooth");
+    return err;
 }
 
-esp_err_t LDM::BLE::setupCallback(void) {
-
-    esp_err_t status = esp_ble_gatts_register_callback(gatts_event_handler);
-    if(status){
-        ESP_LOGE(GATTS_TAG, "gatts register error, error code = %x", status);
-        return status;
-    }
-    status |= esp_ble_gap_register_callback(gap_event_handler);
-    if(status){
-        ESP_LOGE(GATTS_TAG, "gap register error, error code = %x", status);
-        return status;
-    }
-
-    status |= esp_ble_gatts_app_register(PROFILE_A_APP_ID);
-    if(status){
-        ESP_LOGE(GATTS_TAG, "gatts app register error, error code = %x", status);
-        return status;
-    }
-    return status;
+// GAP
+esp_err_t LDM::BLE::registerGapCallback(esp_gap_ble_cb_t callback) {
+    esp_err_t err = esp_ble_gap_register_callback(callback);
+    ERR_CHECK(err, "Error BLE GAP register callback failed");
+    return err;
 }
 
-esp_err_t LDM::BLE::updateValue(uint8_t humidity, uint8_t temperature) {
-    LDM::BLE::manufacturer_data[2] = temperature;
-    LDM::BLE::manufacturer_data[3] = humidity;
-
-    // refresh advertising data
-    esp_err_t status = esp_ble_gap_config_adv_data(&adv_data);
-    if(status){
-        ESP_LOGE(GATTS_TAG, "config adv data failed, error code = %x", status);
-    }
-    // adv_config_done |= adv_config_flag;
-    //config scan response data
-    status = esp_ble_gap_config_adv_data(&scan_rsp_data);
-    if(status){
-        ESP_LOGE(GATTS_TAG, "config scan response data failed, error code = %x", status);
-    }
-    return status;
+esp_err_t LDM::BLE::configGapAdvData(esp_ble_adv_data_t *adv_data) {
+    esp_err_t err = esp_ble_gap_config_adv_data(adv_data);
+    ERR_CHECK(err, "Error BLE GAP ADV configuration failed");
+    return ESP_OK;
 }
 
-void LDM::BLE::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
-    esp_ble_adv_params_t adv_params = {
-        .adv_int_min        = 0x20,
-        .adv_int_max        = 0x40,
-        .adv_type           = ADV_TYPE_IND,
-        .own_addr_type      = BLE_ADDR_TYPE_PUBLIC,
-        //.peer_addr            =
-        //.peer_addr_type       =
-        .channel_map        = ADV_CHNL_ALL,
-        .adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
+esp_err_t LDM::BLE::startGapScan(uint32_t duration) {
+    esp_err_t err = esp_ble_gap_start_scanning(duration);
+    ERR_CHECK(err, "Error BLE GAP start scan failed");
+    return err;
+}
+
+esp_err_t LDM::BLE::stopGapScan(void) {
+    esp_err_t err = esp_ble_gap_stop_scanning();
+    ERR_CHECK(err, "Error BLE GAP stop scan failed");
+    return err;
+}
+
+// GATT Server
+esp_err_t LDM::BLE::registerGattServerCallback(esp_gatts_cb_t callback) {
+    esp_err_t err = esp_ble_gatts_register_callback(callback);
+    ERR_CHECK(err, "Error BLE GATTS register callback failed");
+    return err;
+}
+
+esp_err_t LDM::BLE::registerGattServerAppId(uint16_t app_id) {
+    esp_err_t err = esp_ble_gatts_app_register(app_id);
+    ERR_CHECK(err, "Error LE GATTS register app failed");
+    return err;
+}
+
+esp_err_t LDM::BLE::unregisterGattServerApp(esp_gatt_if_t gatts_if) {
+    esp_err_t err = esp_ble_gatts_app_unregister(gatts_if);
+    ERR_CHECK(err, "Error BLE GATTS unregister app failed");
+    return err;
+}
+
+// BluFi
+esp_err_t LDM::BLE::registerBlufiCallback(esp_blufi_callbacks_t *callbacks) {
+    esp_err_t err = esp_blufi_register_callbacks(callbacks);
+    ERR_CHECK(err, "Error BLE BluFi register callback failed");
+    return err;
+}
+
+esp_err_t LDM::BLE::initBlufi(void) {
+    esp_err_t err = esp_blufi_profile_init();
+    ERR_CHECK(err, "Error BLE BluFi initialization failed");
+
+    ESP_LOGI(TAG, "BluFi Initialized");
+    return err;
+}
+
+esp_err_t LDM::BLE::deinitBlufi(void) {
+    esp_err_t err = esp_blufi_profile_deinit();
+    ERR_CHECK(err, "Error BLE BluFi initialization failed");
+
+    ESP_LOGI(TAG, "BluFi Deinitialized");
+    return err;
+}
+
+uint16_t LDM::BLE::getBlufiVersion(void) {
+    return esp_blufi_get_version();
+}
+
+bool LDM::BLE::isConnected(void) {
+    return LDM::BLE::connected;
+}
+
+esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
+    LDM::BLE::gl_sta_connected = false;
+    LDM::BLE::connected = false;
+
+    uint8_t default_service_uuid128[32] = {
+        /* LSB <--------------------------------------------------------------------------------> MSB */
+        //first uuid, 16bit, [12],[13] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
     };
 
+    LDM::BLE::default_blufi_adv_data.set_scan_rsp = false;
+    LDM::BLE::default_blufi_adv_data.include_name = true;
+    LDM::BLE::default_blufi_adv_data.include_txpower = true;
+    LDM::BLE::default_blufi_adv_data.min_interval = 0x0006; //slave connection min interval, Time = min_interval * 1.25 msec
+    LDM::BLE::default_blufi_adv_data.max_interval = 0x0010; //slave connection max interval, Time = max_interval * 1.25 msec
+    LDM::BLE::default_blufi_adv_data.appearance = 0x00;
+    LDM::BLE::default_blufi_adv_data.manufacturer_len = 0;
+    LDM::BLE::default_blufi_adv_data.p_manufacturer_data =  NULL;
+    LDM::BLE::default_blufi_adv_data.service_data_len = 0;
+    LDM::BLE::default_blufi_adv_data.p_service_data = NULL;
+    LDM::BLE::default_blufi_adv_data.service_uuid_len = 16;
+    LDM::BLE::default_blufi_adv_data.p_service_uuid = default_service_uuid128;
+    LDM::BLE::default_blufi_adv_data.flag = 0x6;
+
+    LDM::BLE::default_blufi_adv_params.adv_int_min        = 0x100;
+    LDM::BLE::default_blufi_adv_params.adv_int_max        = 0x100;
+    LDM::BLE::default_blufi_adv_params.adv_type           = ADV_TYPE_IND;
+    LDM::BLE::default_blufi_adv_params.own_addr_type      = BLE_ADDR_TYPE_PUBLIC;
+    // LDM::BLE::default_blufi_adv_params.peer_addr            =
+    // LDM::BLE::default_blufi_adv_params.peer_addr_type       =
+    LDM::BLE::default_blufi_adv_params.channel_map        = ADV_CHNL_ALL;
+    LDM::BLE::default_blufi_adv_params.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
+
+    esp_blufi_callbacks_t blufi_callbacks = {};
+    blufi_callbacks.event_cb = LDM::BLE::defaultBlufiCallback;
+    // esp_blufi_callbacks_t blufi_callbacks = {
+    //     .event_cb = this->defaultBlufiCallback,
+    //     // .negotiate_data_handler = blufi_dh_negotiate_data_handler,
+    //     // .encrypt_func = blufi_aes_encrypt,
+    //     // .decrypt_func = blufi_aes_decrypt,
+    //     // .checksum_func = blufi_crc_checksum,
+    // }
+
+
+    esp_err_t err = LDM::BLE::registerGapCallback(LDM::BLE::defaultGapHandler);
+    err |= LDM::BLE::registerBlufiCallback(&blufi_callbacks);
+    ERR_CHECK(err, "Error BLE BluFi default callback failed");
+    return err;
+}
+
+void LDM::BLE::defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     switch (event) {
     case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-        adv_config_done &= (~adv_config_flag);
-        if(adv_config_done == 0){
-            esp_ble_gap_start_advertising(&adv_params);
-        }
-        break;
-    case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
-        adv_config_done &= (~scan_rsp_config_flag);
-        if(adv_config_done == 0){
-            esp_ble_gap_start_advertising(&adv_params);
-        }
-        break;
-    case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
-        //advertising start complete event to indicate advertising start successfully or failed
-        if(param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) {
-            ESP_LOGE(GATTS_TAG, "Advertising start failed\n");
-        }
-        break;
-    case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:
-        if(param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS) {
-            ESP_LOGE(GATTS_TAG, "Advertising stop failed\n");
-        } else {
-            ESP_LOGI(GATTS_TAG, "Stop adv successfully\n");
-        }
-        break;
-    case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT:
-        ESP_LOGI(GATTS_TAG, "update connection params status = %d, min_int = %d, max_int = %d,conn_int = %d,latency = %d, timeout = %d",
-            param->update_conn_params.status,
-            param->update_conn_params.min_int,
-            param->update_conn_params.max_int,
-            param->update_conn_params.conn_int,
-            param->update_conn_params.latency,
-            param->update_conn_params.timeout);
+        esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
         break;
     default:
         break;
     }
 }
 
-void LDM::BLE::gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
-    /* If event is register event, store the gatts_if for each profile */
-    if(event == ESP_GATTS_REG_EVT) {
-        if(param->reg.status == ESP_GATT_OK) {
-            gl_profile_tab[param->reg.app_id].gatts_if = gatts_if;
+void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_param_t *param) {
+    /* actually, should post to blufi_task handle the procedure,
+     * now, as a example, we do it more simply */
+    switch (event) {
+    case ESP_BLUFI_EVENT_INIT_FINISH:
+        ESP_LOGI(TAG, "BluFi init finish");
+        esp_ble_gap_set_device_name("TEST");
+        esp_ble_gap_config_adv_data(&LDM::BLE::default_blufi_adv_data);
+        break;
+    case ESP_BLUFI_EVENT_DEINIT_FINISH:
+        ESP_LOGI(TAG, "BluFi deinit finish");
+        break;
+    case ESP_BLUFI_EVENT_BLE_CONNECT:
+        ESP_LOGI(TAG, "BluFi ble connect");
+        LDM::BLE::connected = true;
+        LDM::BLE::server_if = param->connect.server_if;
+        LDM::BLE::conn_id = param->connect.conn_id;
+        esp_ble_gap_stop_advertising();
+        // blufi_security_init();
+        break;
+    case ESP_BLUFI_EVENT_BLE_DISCONNECT:
+        ESP_LOGI(TAG, "BluFi ble disconnect");
+        LDM::BLE::connected = false;
+        // blufi_security_deinit();
+        esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
+        break;
+    case ESP_BLUFI_EVENT_SET_WIFI_OPMODE:
+        ESP_LOGI(TAG, "BluFi Set WIFI opmode %d", param->wifi_mode.op_mode);
+        ESP_ERROR_CHECK( esp_wifi_set_mode(param->wifi_mode.op_mode) );
+        break;
+    case ESP_BLUFI_EVENT_REQ_CONNECT_TO_AP:
+        ESP_LOGI(TAG, "BluFi requset wifi connect to AP");
+        /* there is no wifi callback when the device has already connected to this wifi
+        so disconnect wifi before connection.
+        */
+        esp_wifi_disconnect();
+        esp_wifi_connect();
+        break;
+    case ESP_BLUFI_EVENT_REQ_DISCONNECT_FROM_AP:
+        ESP_LOGI(TAG, "BluFi requset wifi disconnect from AP");
+        esp_wifi_disconnect();
+        break;
+    case ESP_BLUFI_EVENT_REPORT_ERROR:
+        ESP_LOGI(TAG, "BluFi report error, error code %d", param->report_error.state);
+        esp_blufi_send_error_info(param->report_error.state);
+        break;
+    case ESP_BLUFI_EVENT_GET_WIFI_STATUS: {
+        wifi_mode_t mode;
+        esp_blufi_extra_info_t info;
+
+        esp_wifi_get_mode(&mode);
+
+        if (gl_sta_connected) {
+            memset(&info, 0, sizeof(esp_blufi_extra_info_t));
+            memcpy(info.sta_bssid, gl_sta_bssid, 6);
+            info.sta_bssid_set = true;
+            info.sta_ssid = gl_sta_ssid;
+            info.sta_ssid_len = gl_sta_ssid_len;
+            esp_blufi_send_wifi_conn_report(mode, ESP_BLUFI_STA_CONN_SUCCESS, 0, &info);
         } else {
-            ESP_LOGI(GATTS_TAG, "Reg app failed, app_id %04x, status %d\n",
-                param->reg.app_id,
-                param->reg.status);
+            esp_blufi_send_wifi_conn_report(mode, ESP_BLUFI_STA_CONN_FAIL, 0, NULL);
+        }
+        ESP_LOGI(TAG, "BluFi get wifi status from AP");
+
+        break;
+    }
+    case ESP_BLUFI_EVENT_RECV_SLAVE_DISCONNECT_BLE:
+        ESP_LOGI(TAG, "blufi close a gatt connection");
+        esp_blufi_close(LDM::BLE::server_if, LDM::BLE::conn_id);
+        break;
+    case ESP_BLUFI_EVENT_DEAUTHENTICATE_STA:
+        /* TODO */
+        break;
+	case ESP_BLUFI_EVENT_RECV_STA_BSSID:
+        memcpy(LDM::BLE::sta_config.sta.bssid, param->sta_bssid.bssid, 6);
+        LDM::BLE::sta_config.sta.bssid_set = 1;
+        esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
+        ESP_LOGI(TAG, "Recv STA BSSID %s", LDM::BLE::sta_config.sta.ssid);
+        break;
+	case ESP_BLUFI_EVENT_RECV_STA_SSID:
+        strncpy((char *)LDM::BLE::sta_config.sta.ssid, (char *)param->sta_ssid.ssid, param->sta_ssid.ssid_len);
+        LDM::BLE::sta_config.sta.ssid[param->sta_ssid.ssid_len] = '\0';
+        esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
+        ESP_LOGI(TAG, "Recv STA SSID %s", LDM::BLE::sta_config.sta.ssid);
+        break;
+	case ESP_BLUFI_EVENT_RECV_STA_PASSWD:
+        strncpy((char *)LDM::BLE::sta_config.sta.password, (char *)param->sta_passwd.passwd, param->sta_passwd.passwd_len);
+        LDM::BLE::sta_config.sta.password[param->sta_passwd.passwd_len] = '\0';
+        esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
+        ESP_LOGI(TAG, "Recv STA PASSWORD %s", LDM::BLE::sta_config.sta.password);
+        break;
+	case ESP_BLUFI_EVENT_RECV_SOFTAP_SSID:
+        strncpy((char *)LDM::BLE::ap_config.ap.ssid, (char *)param->softap_ssid.ssid, param->softap_ssid.ssid_len);
+        LDM::BLE::ap_config.ap.ssid[param->softap_ssid.ssid_len] = '\0';
+        LDM::BLE::ap_config.ap.ssid_len = param->softap_ssid.ssid_len;
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        ESP_LOGI(TAG, "Recv SOFTAP SSID %s, ssid len %d", LDM::BLE::ap_config.ap.ssid, LDM::BLE::ap_config.ap.ssid_len);
+        break;
+	case ESP_BLUFI_EVENT_RECV_SOFTAP_PASSWD:
+        strncpy((char *)LDM::BLE::ap_config.ap.password, (char *)param->softap_passwd.passwd, param->softap_passwd.passwd_len);
+        LDM::BLE::ap_config.ap.password[param->softap_passwd.passwd_len] = '\0';
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        ESP_LOGI(TAG, "Recv SOFTAP PASSWORD %s len = %d", LDM::BLE::ap_config.ap.password, param->softap_passwd.passwd_len);
+        break;
+	case ESP_BLUFI_EVENT_RECV_SOFTAP_MAX_CONN_NUM:
+        if (param->softap_max_conn_num.max_conn_num > 4) {
             return;
         }
-    }
-
-    /* If the gatts_if equal to profile A, call profile A cb handler,
-     * so here call each profile's callback */
-    do {
-        int idx;
-        for(idx = 0; idx < PROFILE_NUM; idx++) {
-            if(gatts_if == ESP_GATT_IF_NONE || /* ESP_GATT_IF_NONE, not specify a certain gatt_if, need to call every profile cb function */
-                    gatts_if == gl_profile_tab[idx].gatts_if) {
-                if(gl_profile_tab[idx].gatts_cb) {
-                    gl_profile_tab[idx].gatts_cb(event, gatts_if, param);
-                }
-            }
+        LDM::BLE::ap_config.ap.max_connection = param->softap_max_conn_num.max_conn_num;
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        ESP_LOGI(TAG, "Recv SOFTAP MAX CONN NUM %d", LDM::BLE::ap_config.ap.max_connection);
+        break;
+	case ESP_BLUFI_EVENT_RECV_SOFTAP_AUTH_MODE:
+        if (param->softap_auth_mode.auth_mode >= WIFI_AUTH_MAX) {
+            return;
         }
-    } while (0);
-}
-
-
-void LDM::BLE::gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
-    switch (event) {
-    case ESP_GATTS_REG_EVT: {
-        ESP_LOGI(GATTS_TAG, "REGISTER_APP_EVT, status %d, app_id %d\n", param->reg.status, param->reg.app_id);
-        // gl_profile_tab[PROFILE_A_APP_ID].service_id.is_primary = true;
-        // gl_profile_tab[PROFILE_A_APP_ID].service_id.id.inst_id = 0x00;
-        // gl_profile_tab[PROFILE_A_APP_ID].service_id.id.uuid.len = ESP_UUID_LEN_16;
-        // gl_profile_tab[PROFILE_A_APP_ID].service_id.id.uuid.uuid.uuid16 = GATTS_SERVICE_UUID_TEST_A;
-
-        ESP_LOGI(GATTS_TAG, "Setting Device Name: %s", device_name.c_str());
-        esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(device_name.c_str());
-        if(set_dev_name_ret){
-            ESP_LOGE(GATTS_TAG, "set device name failed, error code = %x", set_dev_name_ret);
+        LDM::BLE::ap_config.ap.authmode = param->softap_auth_mode.auth_mode;
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        ESP_LOGI(TAG, "Recv SOFTAP AUTH MODE %d", LDM::BLE::ap_config.ap.authmode);
+        break;
+	case ESP_BLUFI_EVENT_RECV_SOFTAP_CHANNEL:
+        if (param->softap_channel.channel > 13) {
+            return;
         }
-
-        //config adv data
-        esp_err_t ret = esp_ble_gap_config_adv_data(&adv_data);
-        if(ret){
-            ESP_LOGE(GATTS_TAG, "config adv data failed, error code = %x", ret);
-        }
-        //config scan response data
-        ret = esp_ble_gap_config_adv_data(&scan_rsp_data);
-        if(ret){
-            ESP_LOGE(GATTS_TAG, "config scan response data failed, error code = %x", ret);
-        }
-
-        // esp_ble_gatts_create_service(gatts_if, &gl_profile_tab[PROFILE_A_APP_ID].service_id, GATTS_NUM_HANDLE_TEST_A);
+        LDM::BLE::ap_config.ap.channel = param->softap_channel.channel;
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        ESP_LOGI(TAG, "Recv SOFTAP CHANNEL %d", LDM::BLE::ap_config.ap.channel);
+        break;
+    case ESP_BLUFI_EVENT_GET_WIFI_LIST:{
+        wifi_scan_config_t scanConf = {
+            .ssid = NULL,
+            .bssid = NULL,
+            .channel = 0,
+            .show_hidden = false
+        };
+        ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
         break;
     }
-    case ESP_GATTS_READ_EVT:
-    case ESP_GATTS_WRITE_EVT:
-    case ESP_GATTS_EXEC_WRITE_EVT:
-    case ESP_GATTS_MTU_EVT:
-    case ESP_GATTS_UNREG_EVT:
-    case ESP_GATTS_CREATE_EVT:
-    case ESP_GATTS_ADD_INCL_SRVC_EVT:
-    case ESP_GATTS_ADD_CHAR_EVT:
-    case ESP_GATTS_ADD_CHAR_DESCR_EVT:
-    case ESP_GATTS_DELETE_EVT:
-    case ESP_GATTS_START_EVT:
-    case ESP_GATTS_STOP_EVT:
-    case ESP_GATTS_CONNECT_EVT:
-    case ESP_GATTS_DISCONNECT_EVT:
-    case ESP_GATTS_CONF_EVT:
-    case ESP_GATTS_OPEN_EVT:
-    case ESP_GATTS_CANCEL_OPEN_EVT:
-    case ESP_GATTS_CLOSE_EVT:
-    case ESP_GATTS_LISTEN_EVT:
-    case ESP_GATTS_CONGEST_EVT:
+    case ESP_BLUFI_EVENT_RECV_CUSTOM_DATA:
+        ESP_LOGI(TAG, "Recv Custom Data %d", param->custom_data.data_len);
+        esp_log_buffer_hex("Custom Data", param->custom_data.data, param->custom_data.data_len);
+        break;
+	case ESP_BLUFI_EVENT_RECV_USERNAME:
+        /* Not handle currently */
+        break;
+	case ESP_BLUFI_EVENT_RECV_CA_CERT:
+        /* Not handle currently */
+        break;
+	case ESP_BLUFI_EVENT_RECV_CLIENT_CERT:
+        /* Not handle currently */
+        break;
+	case ESP_BLUFI_EVENT_RECV_SERVER_CERT:
+        /* Not handle currently */
+        break;
+	case ESP_BLUFI_EVENT_RECV_CLIENT_PRIV_KEY:
+        /* Not handle currently */
+        break;;
+	case ESP_BLUFI_EVENT_RECV_SERVER_PRIV_KEY:
+        /* Not handle currently */
+        break;
     default:
         break;
     }
 }
-#endif

@@ -7,6 +7,8 @@
 
 #include <server.hpp>
 
+#define TAG HTTP_TAG
+
 LDM::Server::Server(char* base_path) {
 // LDM::Server::Server() {
     this->context = (rest_server_context_t*)calloc(1, sizeof(rest_server_context_t));

@@ -4,17 +4,13 @@
 #include <esp_http_server.h>
 #include <vector>
 
-// // JSON formatting
-// #include <cJSON.h>
-//
-// #define MAX_HTTP_OUTPUT_BUFFER 2048
-
-#define TAG "HTTP_SERVER"
+#define HTTP_TAG "LDM:HTTP_SERVER"
 
 #ifndef ESP_VFS_PATH_MAX
 #define ESP_VFS_PATH_MAX 10
 #endif
 
+// TODO: Add VFS to host preact in vfs
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 #define SCRATCH_BUFSIZE (10240)
 
