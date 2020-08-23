@@ -3,6 +3,7 @@
 #include <esp_gatts_api.h>
 #include <esp_blufi_api.h>
 
+#include <wifi.hpp>
 #include <bluetooth.hpp>
 #include <ble.hpp>
 
@@ -13,6 +14,9 @@ if(_x != ESP_OK) {\
     ESP_LOGE(TAG, "%s "#_msg": %s\n", __func__, esp_err_to_name(err));\
     return err;\
 }
+
+// static defines
+LDM::WiFi LDM::BLE::wifi;
 
 // Bluetooth in BLE Mode
 LDM::BLE::BLE(char* device_name) : Bluetooth(device_name) {
@@ -94,12 +98,18 @@ esp_err_t LDM::BLE::initBlufi(void) {
     esp_err_t err = esp_blufi_profile_init();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
+    err |= LDM::BLE::wifi.init();
+    ERR_CHECK(err, "Error BLE BluFi initialization failed");
+
     ESP_LOGI(TAG, "BluFi Initialized");
     return err;
 }
 
 esp_err_t LDM::BLE::deinitBlufi(void) {
     esp_err_t err = esp_blufi_profile_deinit();
+    ERR_CHECK(err, "Error BLE BluFi initialization failed");
+
+    err |= LDM::BLE::wifi.deinit();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
     ESP_LOGI(TAG, "BluFi Deinitialized");

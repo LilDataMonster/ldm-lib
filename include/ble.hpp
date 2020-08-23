@@ -5,6 +5,7 @@
 #include <esp_gatts_api.h>
 #include <esp_blufi_api.h>
 
+#include <wifi.hpp>
 #include <bluetooth.hpp>
 
 namespace LDM {
@@ -37,7 +38,8 @@ public:
 
     static esp_ble_adv_data_t default_blufi_adv_data;
     static esp_ble_adv_params_t default_blufi_adv_params;
-    
+    static LDM::WiFi wifi;
+
 private:
 
     // static std::string device_name;
