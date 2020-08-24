@@ -16,35 +16,35 @@ public:
     esp_err_t deinit(void);
 
     // GAP
-    static esp_err_t registerGapCallback(esp_gap_ble_cb_t callback);
-    static esp_err_t configGapAdvData(esp_ble_adv_data_t *adv_data);
-    static esp_err_t startGapScan(uint32_t duration);
-    static esp_err_t stopGapScan(void);
+    esp_err_t registerGapCallback(esp_gap_ble_cb_t callback);
+    esp_err_t configGapAdvData(esp_ble_adv_data_t *adv_data);
+    esp_err_t startGapScan(uint32_t duration);
+    esp_err_t stopGapScan(void);
 
     // GATT Server
-    static esp_err_t registerGattServerCallback(esp_gatts_cb_t callback);
-    static esp_err_t registerGattServerAppId(uint16_t app_id);
-    static esp_err_t unregisterGattServerApp(esp_gatt_if_t gatts_if);
+    esp_err_t registerGattServerCallback(esp_gatts_cb_t callback);
+    esp_err_t registerGattServerAppId(uint16_t app_id);
+    esp_err_t unregisterGattServerApp(esp_gatt_if_t gatts_if);
 
     // BluFi
-    static esp_err_t registerBlufiCallback(esp_blufi_callbacks_t *callbacks);
-    static esp_err_t initBlufi(void);
-    static esp_err_t deinitBlufi(void);
-    static uint16_t getBlufiVersion(void);
+    esp_err_t registerBlufiCallback(esp_blufi_callbacks_t *callbacks);
+    esp_err_t initBlufi(void);
+    esp_err_t deinitBlufi(void);
+    uint16_t getBlufiVersion(void);
     static void defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
     static void defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_param_t *param);
-    static esp_err_t setupDefaultBlufiCallback(void);
-    static bool isConnected(void);
+    esp_err_t setupDefaultBlufiCallback(void);
+    bool isConnected(void);
 
     static esp_ble_adv_data_t default_blufi_adv_data;
     static esp_ble_adv_params_t default_blufi_adv_params;
-    static LDM::WiFi wifi;
+    LDM::WiFi wifi;
 
 private:
 
-    // static std::string device_name;
-    static char* device_name;
-    static bool connected;
+    // std::string device_name;
+    char* device_name;
+    bool connected;
 
     // BluFi profile default callback info
     static wifi_config_t sta_config;

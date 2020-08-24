@@ -18,10 +18,6 @@ if(_x != ESP_OK) {\
 }
 
 // define statics
-// set default device name
-bool LDM::BLE::connected = false;
-char* LDM::BLE::device_name = const_cast<char*>("LDM_Device");
-
 // BluFi profile default callback info
 wifi_config_t LDM::BLE::sta_config;
 wifi_config_t LDM::BLE::ap_config;
@@ -82,8 +78,8 @@ esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
     // }
 
 
-    esp_err_t err = LDM::BLE::registerGapCallback(LDM::BLE::defaultGapHandler);
-    err |= LDM::BLE::registerBlufiCallback(&blufi_callbacks);
+    esp_err_t err = this->registerGapCallback(LDM::BLE::defaultGapHandler);
+    err |= this->registerBlufiCallback(&blufi_callbacks);
     ERR_CHECK(err, "Error BLE BluFi default callback failed");
     return err;
 }
@@ -91,7 +87,7 @@ esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
 void LDM::BLE::defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     switch (event) {
     case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-        esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
+        esp_ble_gap_start_advertising(&default_blufi_adv_params);
         break;
     default:
         break;
@@ -111,7 +107,7 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
         break;
     case ESP_BLUFI_EVENT_BLE_CONNECT:
         ESP_LOGI(TAG, "BluFi ble connect");
-        LDM::BLE::connected = true;
+        // LDM::BLE::connected = true;
         LDM::BLE::server_if = param->connect.server_if;
         LDM::BLE::conn_id = param->connect.conn_id;
         esp_ble_gap_stop_advertising();
@@ -119,29 +115,29 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
         break;
     case ESP_BLUFI_EVENT_BLE_DISCONNECT:
         ESP_LOGI(TAG, "BluFi ble disconnect");
-        LDM::BLE::connected = false;
+        // LDM::BLE::connected = false;
         // blufi_security_deinit();
         esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
         break;
     case ESP_BLUFI_EVENT_SET_WIFI_OPMODE:
         ESP_LOGI(TAG, "BluFi Set WIFI opmode %d", param->wifi_mode.op_mode);
-        // ESP_ERROR_CHECK( esp_wifi_set_mode(param->wifi_mode.op_mode) );
-        ESP_ERROR_CHECK( LDM::BLE::wifi.setWiFiMode(param->wifi_mode.op_mode) );
+        ESP_ERROR_CHECK( esp_wifi_set_mode(param->wifi_mode.op_mode) );
+        // ESP_ERROR_CHECK( LDM::BLE::wifi.setWiFiMode(param->wifi_mode.op_mode) );
         break;
     case ESP_BLUFI_EVENT_REQ_CONNECT_TO_AP:
         ESP_LOGI(TAG, "BluFi request wifi connect to AP");
         /* there is no wifi callback when the device has already connected to this wifi
         so disconnect wifi before connection.
         */
-        // esp_wifi_disconnect();
-        // esp_wifi_connect();
-        LDM::BLE::wifi.disconnect();
-        LDM::BLE::wifi.connect();
+        esp_wifi_disconnect();
+        esp_wifi_connect();
+        // LDM::BLE::wifi.disconnect();
+        // LDM::BLE::wifi.connect();
         break;
     case ESP_BLUFI_EVENT_REQ_DISCONNECT_FROM_AP:
         ESP_LOGI(TAG, "BluFi requset wifi disconnect from AP");
-        // esp_wifi_disconnect();
-        LDM::BLE::wifi.disconnect();
+        esp_wifi_disconnect();
+        // LDM::BLE::wifi.disconnect();
         break;
     case ESP_BLUFI_EVENT_REPORT_ERROR:
         ESP_LOGI(TAG, "BluFi report error, error code %d", param->report_error.state);
@@ -153,7 +149,7 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
 
         esp_wifi_get_mode(&mode);
 
-        if (gl_sta_connected) {
+        if(gl_sta_connected) {
             memset(&info, 0, sizeof(esp_blufi_extra_info_t));
             memcpy(info.sta_bssid, gl_sta_bssid, 6);
             info.sta_bssid_set = true;
@@ -177,37 +173,37 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
 	case ESP_BLUFI_EVENT_RECV_STA_BSSID:
         memcpy(LDM::BLE::sta_config.sta.bssid, param->sta_bssid.bssid, 6);
         LDM::BLE::sta_config.sta.bssid_set = 1;
-        // esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_STA, &LDM::BLE::sta_config);
+        esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_STA, &LDM::BLE::sta_config);
         ESP_LOGI(TAG, "Recv STA BSSID %s", LDM::BLE::sta_config.sta.ssid);
         break;
 	case ESP_BLUFI_EVENT_RECV_STA_SSID:
         strncpy((char *)LDM::BLE::sta_config.sta.ssid, (char *)param->sta_ssid.ssid, param->sta_ssid.ssid_len);
         LDM::BLE::sta_config.sta.ssid[param->sta_ssid.ssid_len] = '\0';
-        // esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_STA, &LDM::BLE::sta_config);
+        esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_STA, &LDM::BLE::sta_config);
         ESP_LOGI(TAG, "Recv STA SSID %s", LDM::BLE::sta_config.sta.ssid);
         break;
 	case ESP_BLUFI_EVENT_RECV_STA_PASSWD:
         strncpy((char *)LDM::BLE::sta_config.sta.password, (char *)param->sta_passwd.passwd, param->sta_passwd.passwd_len);
         LDM::BLE::sta_config.sta.password[param->sta_passwd.passwd_len] = '\0';
-        // esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_STA, &LDM::BLE::sta_config);
+        esp_wifi_set_config(WIFI_IF_STA, &LDM::BLE::sta_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_STA, &LDM::BLE::sta_config);
         ESP_LOGI(TAG, "Recv STA PASSWORD %s", LDM::BLE::sta_config.sta.password);
         break;
 	case ESP_BLUFI_EVENT_RECV_SOFTAP_SSID:
         strncpy((char *)LDM::BLE::ap_config.ap.ssid, (char *)param->softap_ssid.ssid, param->softap_ssid.ssid_len);
         LDM::BLE::ap_config.ap.ssid[param->softap_ssid.ssid_len] = '\0';
         LDM::BLE::ap_config.ap.ssid_len = param->softap_ssid.ssid_len;
-        // esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
         ESP_LOGI(TAG, "Recv SOFTAP SSID %s, ssid len %d", LDM::BLE::ap_config.ap.ssid, LDM::BLE::ap_config.ap.ssid_len);
         break;
 	case ESP_BLUFI_EVENT_RECV_SOFTAP_PASSWD:
         strncpy((char *)LDM::BLE::ap_config.ap.password, (char *)param->softap_passwd.passwd, param->softap_passwd.passwd_len);
         LDM::BLE::ap_config.ap.password[param->softap_passwd.passwd_len] = '\0';
-        // esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
         ESP_LOGI(TAG, "Recv SOFTAP PASSWORD %s len = %d", LDM::BLE::ap_config.ap.password, param->softap_passwd.passwd_len);
         break;
 	case ESP_BLUFI_EVENT_RECV_SOFTAP_MAX_CONN_NUM:
@@ -215,8 +211,8 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
             return;
         }
         LDM::BLE::ap_config.ap.max_connection = param->softap_max_conn_num.max_conn_num;
-        // esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
         ESP_LOGI(TAG, "Recv SOFTAP MAX CONN NUM %d", LDM::BLE::ap_config.ap.max_connection);
         break;
 	case ESP_BLUFI_EVENT_RECV_SOFTAP_AUTH_MODE:
@@ -224,8 +220,8 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
             return;
         }
         LDM::BLE::ap_config.ap.authmode = param->softap_auth_mode.auth_mode;
-        // esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
         ESP_LOGI(TAG, "Recv SOFTAP AUTH MODE %d", LDM::BLE::ap_config.ap.authmode);
         break;
 	case ESP_BLUFI_EVENT_RECV_SOFTAP_CHANNEL:
@@ -233,8 +229,8 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
             return;
         }
         LDM::BLE::ap_config.ap.channel = param->softap_channel.channel;
-        // esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
-        LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
+        esp_wifi_set_config(WIFI_IF_AP, &LDM::BLE::ap_config);
+        // LDM::BLE::wifi.setConfig(WIFI_IF_AP, &LDM::BLE::ap_config);
         ESP_LOGI(TAG, "Recv SOFTAP CHANNEL %d", LDM::BLE::ap_config.ap.channel);
         break;
     case ESP_BLUFI_EVENT_GET_WIFI_LIST:{

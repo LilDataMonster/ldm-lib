@@ -15,14 +15,14 @@ if(_x != ESP_OK) {\
     return err;\
 }
 
-// static defines
-LDM::WiFi LDM::BLE::wifi;
+// // static defines
+// LDM::WiFi LDM::BLE::wifi;
 
 // Bluetooth in BLE Mode
 LDM::BLE::BLE(char* device_name) : Bluetooth(device_name) {
     // set device name
-    LDM::BLE::device_name = device_name;
-    LDM::BLE::connected = false;
+    this->device_name = device_name;
+    this->connected = false;
 }
 
 esp_err_t LDM::BLE::init(void) {
