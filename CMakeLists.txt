@@ -16,5 +16,6 @@ idf_component_register(
              esp_http_server
              esp_https_ota
              #esp_https_server
+             driver
     EMBED_TXTFILES ${cert_pem}
 )
