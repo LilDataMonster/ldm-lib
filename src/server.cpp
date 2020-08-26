@@ -31,6 +31,10 @@ LDM::Server::~Server(void) {
     this->registered_uri.clear();
 }
 
+httpd_config_t * LDM::Server::getConfig(void) {
+    return &this->config;
+}
+
 esp_err_t LDM::Server::stopServer(void) {
     esp_err_t err = ESP_OK;
     if(this->server != NULL) {

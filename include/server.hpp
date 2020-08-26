@@ -30,6 +30,7 @@ public:
     esp_err_t startServer(void);
     esp_err_t stopServer(void);
 
+    httpd_config_t * getConfig(void);
     esp_err_t registerUriHandle(httpd_uri_t *uri);
     esp_err_t unregisterUriHandle(httpd_uri_t *uri);
     esp_err_t unregisterUriHandle(char* uri, httpd_method_t method);
