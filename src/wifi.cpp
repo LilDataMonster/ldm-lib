@@ -45,6 +45,7 @@ if(_x != ESP_OK) {\
 //  * - we failed to connect after the maximum amount of retries */
 // #define WIFI_CONNECTED_BIT BIT0
 // #define WIFI_FAIL_BIT      BIT1
+const int CONNECTED_BIT = BIT0;
 
 #define MAX_RETRY      5 //CONFIG_ESP_MAXIMUM_RETRY
 
@@ -55,6 +56,12 @@ static int s_retry_num = 0;
 esp_ip4_addr_t LDM::WiFi::ipv4_address;
 esp_ip4_addr_t LDM::WiFi::netmask;
 esp_ip4_addr_t LDM::WiFi::gateway;
+
+static bool gl_sta_connected = false;
+static bool ble_is_connected = false;
+static uint8_t gl_sta_bssid[6];
+static uint8_t gl_sta_ssid[32];
+static int gl_sta_ssid_len;
 
 bool LDM::WiFi::connected = false;
 LDM::WiFi::WiFi() {
@@ -83,8 +90,8 @@ esp_err_t LDM::WiFi::init(void) {
     ESP_ERROR_CHECK(esp_wifi_init(&this->init_config));
 
     // add event handlers
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
 
     // setup default ssid/password
     strcpy((char*)config.sta.ssid, DEFAULT_SSID);
@@ -177,6 +184,128 @@ esp_err_t LDM::WiFi::setConfig(wifi_interface_t interface, wifi_config_t *config
         return err;
     }
     return err;
+}
+
+void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    wifi_event_sta_connected_t *event;
+    wifi_mode_t mode;
+
+    switch(event_id) {
+    case WIFI_EVENT_STA_START:
+        esp_wifi_connect();
+        break;
+    case WIFI_EVENT_STA_CONNECTED:
+        gl_sta_connected = true;
+        event = (wifi_event_sta_connected_t*) event_data;
+        memcpy(gl_sta_bssid, event->bssid, 6);
+        memcpy(gl_sta_ssid, event->ssid, event->ssid_len);
+        gl_sta_ssid_len = event->ssid_len;
+        break;
+    case WIFI_EVENT_STA_DISCONNECTED:
+        /* This is a workaround as ESP32 WiFi libs don't currently
+        auto-reassociate. */
+        gl_sta_connected = false;
+        memset(gl_sta_ssid, 0, 32);
+        memset(gl_sta_bssid, 0, 6);
+        gl_sta_ssid_len = 0;
+        esp_wifi_connect();
+        xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
+        break;
+    // case WIFI_EVENT_AP_START:
+    //     esp_wifi_get_mode(&mode);
+    //
+    //     /* TODO: get config or information of softap, then set to report extra_info */
+    //     if(ble_is_connected == true) {
+    //         if(gl_sta_connected) {
+    //             esp_blufi_send_wifi_conn_report(mode, ESP_BLUFI_STA_CONN_SUCCESS, 0, NULL);
+    //         } else {
+    //             esp_blufi_send_wifi_conn_report(mode, ESP_BLUFI_STA_CONN_FAIL, 0, NULL);
+    //         }
+    //     } else {
+    //         ESP_LOGI(WIFI_TAG, "BLUFI BLE is not connected yet");
+    //     }
+    //     break;
+    // case WIFI_EVENT_SCAN_DONE: {
+    //     uint16_t apCount = 0;
+    //     esp_wifi_scan_get_ap_num(&apCount);
+    //     if(apCount == 0) {
+    //         BLUFI_INFO("Nothing AP found");
+    //         break;
+    //     }
+    //     wifi_ap_record_t *ap_list = (wifi_ap_record_t *)malloc(sizeof(wifi_ap_record_t) * apCount);
+    //     if(!ap_list) {
+    //         BLUFI_ERROR("malloc error, ap_list is NULL");
+    //         break;
+    //     }
+    //     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, ap_list));
+    //     esp_blufi_ap_record_t * blufi_ap_list = (esp_blufi_ap_record_t *)malloc(apCount * sizeof(esp_blufi_ap_record_t));
+    //     if(!blufi_ap_list) {
+    //         if(ap_list) {
+    //             free(ap_list);
+    //         }
+    //         BLUFI_ERROR("malloc error, blufi_ap_list is NULL");
+    //         break;
+    //     }
+    //     for(int i = 0; i < apCount; ++i) {
+    //         blufi_ap_list[i].rssi = ap_list[i].rssi;
+    //         memcpy(blufi_ap_list[i].ssid, ap_list[i].ssid, sizeof(ap_list[i].ssid));
+    //     }
+    //
+    //     if(ble_is_connected == true) {
+    //         esp_blufi_send_wifi_list(apCount, blufi_ap_list);
+    //     } else {
+    //         BLUFI_INFO("BLUFI BLE is not connected yet");
+    //     }
+    //
+    //     esp_wifi_scan_stop();
+    //     free(ap_list);
+    //     free(blufi_ap_list);
+    //     break;
+    // }
+    default:
+        break;
+    }
+    return;
+}
+
+void LDM::WiFi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    wifi_mode_t mode;
+
+    switch(event_id) {
+    case IP_EVENT_STA_GOT_IP: {
+        // esp_blufi_extra_info_t info;
+        //
+        xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
+        // esp_wifi_get_mode(&mode);
+        //
+        // memset(&info, 0, sizeof(esp_blufi_extra_info_t));
+        // memcpy(info.sta_bssid, gl_sta_bssid, 6);
+        // info.sta_bssid_set = true;
+        // info.sta_ssid = gl_sta_ssid;
+        // info.sta_ssid_len = gl_sta_ssid_len;
+        // if (ble_is_connected == true) {
+        //     esp_blufi_send_wifi_conn_report(mode, ESP_BLUFI_STA_CONN_SUCCESS, 0, &info);
+        // } else {
+        //     // BLUFI_INFO("BLUFI BLE is not connected yet");
+        //     ESP_LOGI(WIFI_TAG, "BLUFI BLE is not connected yet");
+        // }
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(WIFI_TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(WIFI_TAG, "Netmask IP: " IPSTR, IP2STR(&event->ip_info.netmask));
+        ESP_LOGI(WIFI_TAG, "Gateway IP: " IPSTR, IP2STR(&event->ip_info.gw));
+
+        LDM::WiFi::ipv4_address = *(&event->ip_info.ip);
+        LDM::WiFi::netmask = *(&event->ip_info.netmask);
+        LDM::WiFi::gateway = *(&event->ip_info.gw);
+
+        LDM::WiFi::connected = true;
+        s_retry_num = 0;
+        break;
+    }
+    default:
+        break;
+    }
+    return;
 }
 
 void LDM::WiFi::event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
