@@ -52,7 +52,6 @@ esp_err_t LDM::BLE::deinit(void) {
 
 // GAP
 esp_err_t LDM::BLE::registerGapCallback(esp_gap_ble_cb_t callback) {
-    ESP_LOGI(TAG, "REGISTERING GAP CALLBACK");
     esp_err_t err = esp_ble_gap_register_callback(callback);
     ERR_CHECK(err, "Error BLE GAP register callback failed");
     return err;
@@ -97,7 +96,6 @@ esp_err_t LDM::BLE::unregisterGattServerApp(esp_gatt_if_t gatts_if) {
 
 // BluFi
 esp_err_t LDM::BLE::registerBlufiCallback(esp_blufi_callbacks_t *callbacks) {
-    ESP_LOGI(TAG, "REGISTERING BLUFI CALLBACK");
     esp_err_t err = esp_blufi_register_callbacks(callbacks);
     ERR_CHECK(err, "Error BLE BluFi register callback failed");
     return err;
