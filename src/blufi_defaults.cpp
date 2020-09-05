@@ -67,7 +67,7 @@ esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
     LDM::BLE::default_blufi_adv_params.channel_map        = ADV_CHNL_ALL;
     LDM::BLE::default_blufi_adv_params.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
 
-    esp_blufi_callbacks_t blufi_callbacks = {};
+    esp_blufi_callbacks_t blufi_callbacks;
     blufi_callbacks.event_cb = LDM::BLE::defaultBlufiCallback;
     // esp_blufi_callbacks_t blufi_callbacks = {
     //     .event_cb = this->defaultBlufiCallback,
@@ -77,17 +77,19 @@ esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
     //     // .checksum_func = blufi_crc_checksum,
     // }
 
-
+    ESP_LOGI(TAG, "Initializing Default GAP Callback");
     esp_err_t err = this->registerGapCallback(LDM::BLE::defaultGapHandler);
     err |= this->registerBlufiCallback(&blufi_callbacks);
     ERR_CHECK(err, "Error BLE BluFi default callback failed");
+
     return err;
 }
 
 void LDM::BLE::defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     switch (event) {
     case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-        esp_ble_gap_start_advertising(&default_blufi_adv_params);
+        esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
+        ESP_LOGI(TAG, "Started GAP Advertising");
         break;
     default:
         break;

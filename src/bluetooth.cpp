@@ -44,6 +44,7 @@ esp_err_t LDM::Bluetooth::init(esp_bt_mode_t bt_mode) {
 
     err |= esp_bt_dev_set_device_name(this->device_name);
     ERR_CHECK(err, "Init bluetooth setting device name failed");
+    ESP_LOGI(TAG, "Bluetooth Device name set to: %s", this->device_name);
 
     ESP_LOGI(TAG, "Bluetooth Initialized");
     this->controller_initialized = true;
@@ -69,10 +70,12 @@ esp_err_t LDM::Bluetooth::initializeController(esp_bt_mode_t bt_mode) {
     // initialize conroller
     esp_err_t err = esp_bt_controller_init(&this->config);
     ERR_CHECK(err, "Init bluetooth controller failed");
+    ESP_LOGI(TAG, "Bluetooth Controller Initialized");
 
     // enable controller
     err |= esp_bt_controller_enable(this->bt_mode);
     ERR_CHECK(err, "Enable bluetooth controller failed");
+    ESP_LOGI(TAG, "Bluetooth Controller Enabled");
 
     this->controller_initialized = true;
     return err;
@@ -82,10 +85,12 @@ esp_err_t LDM::Bluetooth::initializeBluedroid(void) {
     // initialize bluedroid
     esp_err_t err = esp_bluedroid_init();
     ERR_CHECK(err, "Init bluedroid failed");
+    ESP_LOGI(TAG, "Bluedroid Initialized");
 
     // enable bluedroid
     err |= esp_bluedroid_enable();
     ERR_CHECK(err, "Enable bluedroid failed");
+    ESP_LOGI(TAG, "Bluedroid Enabled");
 
     return err;
 }
@@ -94,10 +99,12 @@ esp_err_t LDM::Bluetooth::deinitializeController(void) {
     // disable controller
     esp_err_t err = esp_bt_controller_disable();
     ERR_CHECK(err, "Disable bluetooth controller failed");
+    ESP_LOGI(TAG, "Bluetooth Controller Disabled");
 
     // deinit controller
     err |= esp_bt_controller_deinit();
     ERR_CHECK(err, "Deinit bluetooth controller failed");
+    ESP_LOGI(TAG, "Bluetooth Controller Deinitialized");
 
     // free bluetooth stack memory
     err |= esp_bt_mem_release(this->bt_mode);
@@ -110,10 +117,12 @@ esp_err_t LDM::Bluetooth::deinitializeBluedroid(void) {
     // disable bluedroid
     esp_err_t err = esp_bluedroid_disable();
     ERR_CHECK(err, "Disable bluedroid failed");
+    ESP_LOGI(TAG, "Bluedroid Disabled");
 
     // deinit bluedroid
     err |= esp_bluedroid_deinit();
     ERR_CHECK(err, "Deinit bluedroid failed");
+    ESP_LOGI(TAG, "Bluedroid Deinitialized");
 
     return err;
 }
