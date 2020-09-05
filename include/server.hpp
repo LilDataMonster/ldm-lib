@@ -37,7 +37,10 @@ public:
     esp_err_t unregisterAllUriHandles(void);
     esp_err_t unregisterAllUriHandles(char* uri);
 
+    bool isStarted(void);
+
 private:
+    bool started;
     httpd_handle_t server;
     httpd_config_t config;
     rest_server_context_t *context;

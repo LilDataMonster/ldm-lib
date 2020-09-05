@@ -22,6 +22,7 @@ LDM::Server::Server(char* base_path) {
     this->server = NULL;
     this->config = HTTPD_DEFAULT_CONFIG();
     this->config.uri_match_fn = httpd_uri_match_wildcard;
+    this->started = false;
 }
 
 LDM::Server::~Server(void) {
@@ -43,6 +44,7 @@ esp_err_t LDM::Server::stopServer(void) {
             ESP_LOGE(TAG, "Error Stopping Server %s", esp_err_to_name(err));
             return err;
         }
+        this->started = false;
     } else {
         ESP_LOGE(TAG, "Error Stopping Server, Server not started");
     }
@@ -56,6 +58,7 @@ esp_err_t LDM::Server::startServer(void) {
         ESP_LOGE(TAG, "Error Starting Server %s", esp_err_to_name(err));
         return err;
     }
+    this->started = true;
     return ESP_OK;
 }
 
@@ -177,4 +180,8 @@ esp_err_t LDM::Server::unregisterAllUriHandles(char* uri) {
         this->registered_uri.erase(this->registered_uri.begin()+i - cnt++);
     }
     return err;
+}
+
+bool LDM::Server::isStarted(void) {
+    return this->started;
 }

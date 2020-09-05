@@ -1,7 +1,7 @@
 #include <cstring>
 
-// #include <freertos/FreeRTOS.h>
-// #include <freertos/event_groups.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 
 #include <cJSON.h>
 #include <esp_event.h>
@@ -49,7 +49,7 @@ if(_x != ESP_OK) {\
 #define MAX_RETRY      5 //CONFIG_ESP_MAXIMUM_RETRY
 
 // /* FreeRTOS event group to signal when we are connected*/
-// static EventGroupHandle_t s_wifi_event_group;
+static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
 esp_ip4_addr_t LDM::WiFi::ipv4_address;
@@ -58,12 +58,15 @@ esp_ip4_addr_t LDM::WiFi::gateway;
 
 bool LDM::WiFi::connected = false;
 LDM::WiFi::WiFi() {
+    this->config = {
+
+    };
 }
 
 esp_err_t LDM::WiFi::init(void) {
     esp_err_t err = ESP_OK;
 
-    // s_wifi_event_group = xEventGroupCreate();
+    s_wifi_event_group = xEventGroupCreate();
 
     // init netif
     ESP_ERROR_CHECK(esp_netif_init());
@@ -189,6 +192,7 @@ void LDM::WiFi::event_handler(void* arg, esp_event_base_t event_base, int32_t ev
         } else {
             // xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
             ESP_LOGE(WIFI_TAG, "Connecting to the AP failed");
+            s_retry_num = 0;
         }
     } else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
