@@ -6,7 +6,7 @@
 
 #include <system.hpp>
 
-#define TAG "LDM-SYSTEM"
+#define TAG "LDM-LIB:SYSTEM"
 
 #define CASE_STRING_MACRO(_cjson, _name, _macro) case _macro: \
     cJSON_AddStringToObject(_cjson, _name, #_macro); \

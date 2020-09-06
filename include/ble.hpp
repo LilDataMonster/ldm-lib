@@ -29,6 +29,7 @@ public:
     // BluFi
     esp_err_t registerBlufiCallback(esp_blufi_callbacks_t *callbacks);
     esp_err_t initBlufi(void);
+    esp_err_t initBlufi(wifi_config_t *wifi_config);
     esp_err_t deinitBlufi(void);
     uint16_t getBlufiVersion(void);
     static void defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
@@ -58,20 +59,6 @@ private:
     static uint8_t gl_sta_bssid[6];
     static uint8_t gl_sta_ssid[32];
     static int gl_sta_ssid_len;
-    // static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
-    // static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
-    // static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
-
-    // static std::string device_name;
-    // static uint8_t manufacturer_data[MANUFACTURER_DATA_LEN];
-    //
-    // static uint8_t adv_service_uuid128[32] ;
-    // static struct gatts_profile_inst gl_profile_tab[PROFILE_NUM];
-    //
-    // static esp_ble_adv_data_t adv_data;
-    // static esp_ble_adv_data_t scan_rsp_data;
-    //
-    // static uint8_t adv_config_done;
 };
 }
 

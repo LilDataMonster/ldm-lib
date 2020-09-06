@@ -11,7 +11,7 @@
 
 #include <bluetooth.hpp>
 
-#define TAG BLUETOOTH_TAG
+#define TAG "LDM-LIB:BLUETOOTH"
 
 #define ERR_CHECK(_x, _msg) \
 if(_x != ESP_OK) {\

@@ -1,14 +1,7 @@
 #ifndef __BLUETOOTH_HPP__
 #define __BLUETOOTH_HPP__
 
-// #include <esp_http_server.h>
-// #include <vector>
-
-// #include <esp_gap_ble_api.h>
-// #include <esp_gatts_api.h>
 #include <esp_bt.h>
-
-#define BLUETOOTH_TAG "LDM:BLUETOOTH"
 
 namespace LDM {
 class Bluetooth {

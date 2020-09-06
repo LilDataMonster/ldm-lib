@@ -4,7 +4,7 @@
 
 #include <nvs.hpp>
 
-#define TAG "LDM-NVS"
+#define TAG "LDM-LIB:NVS"
 
 LDM::NVS::NVS(nvs_handle_t nvs_h) {
     if(nvs_h != -1) {
@@ -65,16 +65,16 @@ esp_err_t LDM::NVS::getKeyU8(const char *key, uint8_t *value) {
             ESP_LOGI(TAG, "NVS Get Key %s = %u", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -86,19 +86,19 @@ esp_err_t LDM::NVS::setKeyU8(const char *key, uint8_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %u", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -110,16 +110,16 @@ esp_err_t LDM::NVS::getKeyU16(const char *key, uint16_t *value) {
             ESP_LOGI(TAG, "NVS Get Key %s = %u", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -131,19 +131,19 @@ esp_err_t LDM::NVS::setKeyU16(const char *key, uint16_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %u", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -155,16 +155,16 @@ esp_err_t LDM::NVS::getKeyU32(const char *key, uint32_t *value) {
             ESP_LOGI(TAG, "NVS Get Key %s = %u", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -176,19 +176,19 @@ esp_err_t LDM::NVS::setKeyU32(const char *key, uint32_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %u", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -200,16 +200,16 @@ esp_err_t LDM::NVS::getKeyU64(const char *key, uint64_t *value) {
              ESP_LOGI(TAG, "NVS Get Key %s = %llu", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -221,19 +221,19 @@ esp_err_t LDM::NVS::setKeyU64(const char *key, uint64_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %llu", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -245,16 +245,16 @@ esp_err_t LDM::NVS::getKeyI8(const char *key, int8_t *value) {
             ESP_LOGI(TAG, "NVS Get Key %s = %d", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -266,19 +266,19 @@ esp_err_t LDM::NVS::setKeyI8(const char *key, int8_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %d", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -290,16 +290,16 @@ esp_err_t LDM::NVS::getKeyI16(const char *key, int16_t *value) {
             ESP_LOGI(TAG, "NVS Get Key %s = %d", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -311,19 +311,19 @@ esp_err_t LDM::NVS::setKeyI16(const char *key, int16_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %d", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -335,16 +335,16 @@ esp_err_t LDM::NVS::getKeyI32(const char *key, int32_t *value) {
             ESP_LOGI(TAG, "NVS Get Key %s = %d", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -356,19 +356,19 @@ esp_err_t LDM::NVS::setKeyI32(const char *key, int32_t value) {
             ESP_LOGI(TAG, "NVS Set Key %s = %d", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -377,19 +377,19 @@ esp_err_t LDM::NVS::getKeyI64(const char *key, int64_t *value) {
     esp_err_t ret = nvs_get_i64(nvs_h, key, value);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Get Key %s = %lld", key, *value);
+            ESP_LOGI(TAG, "NVS Get Key (%s) = %lld", key, *value);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -398,22 +398,22 @@ esp_err_t LDM::NVS::setKeyI64(const char *key, int64_t value) {
     esp_err_t ret = nvs_set_i64(nvs_h, key, value);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Set Key %s = %lld", key, value);
+            ESP_LOGI(TAG, "NVS Set Key (%s) = %lld", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -422,19 +422,24 @@ esp_err_t LDM::NVS::getKeyStr(const char *key, char *value, size_t *size) {
     esp_err_t ret = nvs_get_str(nvs_h, key, value, size);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Get Key %s = %s", key, value);
+            // handle call when fetching size
+            if(value == NULL) {
+                ESP_LOGI(TAG, "NVS Get Key (%s) (size = %d)", key, *size);
+            } else {
+                ESP_LOGI(TAG, "NVS Get Key (%s) = %s (size = %d)", key, value, *size);
+            }
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -443,22 +448,22 @@ esp_err_t LDM::NVS::setKeyStr(const char *key, char *value) {
     esp_err_t ret = nvs_set_str(nvs_h, key, value);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Set Key %s = %s", key, value);
+            ESP_LOGI(TAG, "NVS Set Key (%s) = %s", key, value);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -467,19 +472,19 @@ esp_err_t LDM::NVS::getKeyBlob(const char *key, void *value, size_t *size) {
     esp_err_t ret = nvs_get_blob(nvs_h, key, value, size);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Get Key %s Blob", key);
+            ESP_LOGI(TAG, "NVS Get Key %s Blob (size = %d)", key, *size);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -491,19 +496,19 @@ esp_err_t LDM::NVS::setKeyBlob(const char *key, char *value, size_t size) {
             ESP_LOGI(TAG, "NVS Set Key %s Blob", key);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_INVALID_NAME:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not satisfy constraints");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not satisfy constraints", key);
             break;
         case ESP_ERR_NVS_INVALID_LENGTH:
-            ESP_LOGE(TAG, "NVS Key Error: The length is not sufficient to store data");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) length is not sufficient to store data", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -513,19 +518,19 @@ esp_err_t LDM::NVS::eraseNVSKey(const char *key) {
     esp_err_t ret = nvs_erase_key(nvs_h, key);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Set Key %s erased", key);
+            ESP_LOGI(TAG, "NVS Set Key (%s) erased", key);
             break;
         case ESP_ERR_NVS_INVALID_HANDLE:
-            ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) NVS handle has been closed or is NULL", key);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
-            ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) does not exist", key);
             break;
         case ESP_ERR_NVS_READ_ONLY:
-            ESP_LOGE(TAG, "NVS Key Error: The key is opened as read-only");
+            ESP_LOGE(TAG, "NVS Key Error: The key (%s) is opened as read-only", key);
             break;
         default :
-            ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "NVS Key (%s) Error: (%s)", key, esp_err_to_name(ret));
     }
     return ret;
 }
@@ -540,7 +545,7 @@ esp_err_t LDM::NVS::eraseNVSAllKeys(void) {
             ESP_LOGE(TAG, "NVS Key Error: The NVS handle has been closed or is NULL");
             break;
         case ESP_ERR_NVS_READ_ONLY:
-            ESP_LOGE(TAG, "NVS Key Error: The key is opened as read-only");
+            ESP_LOGE(TAG, "NVS Key Error: The keys are opened as read-only");
             break;
         default :
             ESP_LOGE(TAG, "NVS Key Error: (%s)", esp_err_to_name(ret));

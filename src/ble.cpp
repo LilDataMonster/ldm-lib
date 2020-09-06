@@ -7,7 +7,7 @@
 #include <bluetooth.hpp>
 #include <ble.hpp>
 
-#define TAG "LDM:BLE"
+#define TAG "LDM-LIB:BLE"
 
 #define ERR_CHECK(_x, _msg) \
 if(_x != ESP_OK) {\
@@ -52,7 +52,6 @@ esp_err_t LDM::BLE::deinit(void) {
 
 // GAP
 esp_err_t LDM::BLE::registerGapCallback(esp_gap_ble_cb_t callback) {
-    ESP_LOGI(TAG, "REGISTERING GAP CALLBACK");
     esp_err_t err = esp_ble_gap_register_callback(callback);
     ERR_CHECK(err, "Error BLE GAP register callback failed");
     return err;
@@ -97,7 +96,6 @@ esp_err_t LDM::BLE::unregisterGattServerApp(esp_gatt_if_t gatts_if) {
 
 // BluFi
 esp_err_t LDM::BLE::registerBlufiCallback(esp_blufi_callbacks_t *callbacks) {
-    ESP_LOGI(TAG, "REGISTERING BLUFI CALLBACK");
     esp_err_t err = esp_blufi_register_callbacks(callbacks);
     ERR_CHECK(err, "Error BLE BluFi register callback failed");
     return err;
@@ -107,7 +105,18 @@ esp_err_t LDM::BLE::initBlufi(void) {
     esp_err_t err = esp_blufi_profile_init();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
-    err |= LDM::BLE::wifi.init();
+    err |= LDM::BLE::wifi.init(NULL);
+    ERR_CHECK(err, "Error BLE BluFi initialization failed");
+
+    ESP_LOGI(TAG, "BluFi Initialized");
+    return err;
+}
+
+esp_err_t LDM::BLE::initBlufi(wifi_config_t *wifi_config) {
+    esp_err_t err = esp_blufi_profile_init();
+    ERR_CHECK(err, "Error BLE BluFi initialization failed");
+
+    err |= LDM::BLE::wifi.init(wifi_config);
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
     ESP_LOGI(TAG, "BluFi Initialized");

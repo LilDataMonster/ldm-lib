@@ -5,12 +5,11 @@
 #include <esp_system.h>
 #include <esp_http_server.h>
 
-#include <server.hpp>
+#include <http_server.hpp>
 
-#define TAG HTTP_TAG
+#define TAG "LDM-LIB:HTTP_SERVER"
 
-LDM::Server::Server(char* base_path) {
-// LDM::Server::Server() {
+LDM::HTTP_Server::HTTP_Server(char* base_path) {
     this->context = (rest_server_context_t*)calloc(1, sizeof(rest_server_context_t));
     if(!this->context) {
         ESP_LOGE(TAG, "No memory for rest context");
@@ -25,46 +24,46 @@ LDM::Server::Server(char* base_path) {
     this->started = false;
 }
 
-LDM::Server::~Server(void) {
+LDM::HTTP_Server::~HTTP_Server(void) {
     free(this->context);
     // stopping server will remove all uris
     this->stopServer();
     this->registered_uri.clear();
 }
 
-httpd_config_t * LDM::Server::getConfig(void) {
+httpd_config_t * LDM::HTTP_Server::getConfig(void) {
     return &this->config;
 }
 
-esp_err_t LDM::Server::stopServer(void) {
+esp_err_t LDM::HTTP_Server::stopServer(void) {
     esp_err_t err = ESP_OK;
     if(this->server != NULL) {
         err = httpd_stop(this->server);
         if(err != ESP_OK) {
-            ESP_LOGE(TAG, "Error Stopping Server %s", esp_err_to_name(err));
+            ESP_LOGE(TAG, "Error Stopping HTTP Server %s", esp_err_to_name(err));
             return err;
         }
         this->started = false;
     } else {
-        ESP_LOGE(TAG, "Error Stopping Server, Server not started");
+        ESP_LOGE(TAG, "Error Stopping HTTP Server, Server not started");
     }
     return err;
 }
 
-esp_err_t LDM::Server::startServer(void) {
+esp_err_t LDM::HTTP_Server::startServer(void) {
     ESP_LOGI(TAG, "Starting HTTP Server");
     esp_err_t err = httpd_start(&this->server, &this->config);
     if(err != ESP_OK) {
-        ESP_LOGE(TAG, "Error Starting Server %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Error Starting HTTP Server %s", esp_err_to_name(err));
         return err;
     }
     this->started = true;
     return ESP_OK;
 }
 
-esp_err_t LDM::Server::registerUriHandle(httpd_uri_t *uri) {
+esp_err_t LDM::HTTP_Server::registerUriHandle(httpd_uri_t *uri) {
     if(this->server == NULL) {
-        ESP_LOGE(TAG, "Error registering URI: Server is not initialized");
+        ESP_LOGE(TAG, "Error registering URI: HTTP Server is not initialized");
         return ESP_FAIL;
     }
 
@@ -78,9 +77,9 @@ esp_err_t LDM::Server::registerUriHandle(httpd_uri_t *uri) {
     return err;
 }
 
-esp_err_t LDM::Server::unregisterUriHandle(httpd_uri_t *uri) {
+esp_err_t LDM::HTTP_Server::unregisterUriHandle(httpd_uri_t *uri) {
     if(this->server == NULL) {
-        ESP_LOGE(TAG, "Error registering URI: Server is not initialized");
+        ESP_LOGE(TAG, "Error registering URI: HTTP Server is not initialized");
         return ESP_FAIL;
     }
 
@@ -96,9 +95,9 @@ esp_err_t LDM::Server::unregisterUriHandle(httpd_uri_t *uri) {
     return err;
 }
 
-esp_err_t LDM::Server::unregisterUriHandle(char* uri, httpd_method_t method) {
+esp_err_t LDM::HTTP_Server::unregisterUriHandle(char* uri, httpd_method_t method) {
     if(this->server == NULL) {
-        ESP_LOGE(TAG, "Error registering URI: Server is not initialized");
+        ESP_LOGE(TAG, "Error registering URI: HTTP Server is not initialized");
         return ESP_FAIL;
     }
 
@@ -132,9 +131,9 @@ esp_err_t LDM::Server::unregisterUriHandle(char* uri, httpd_method_t method) {
     return err;
 }
 
-esp_err_t LDM::Server::unregisterAllUriHandles(void) {
+esp_err_t LDM::HTTP_Server::unregisterAllUriHandles(void) {
     if(this->server == NULL) {
-        ESP_LOGE(TAG, "Error registering URI: Server is not initialized");
+        ESP_LOGE(TAG, "Error registering URI: HTTP Server is not initialized");
         return ESP_FAIL;
     }
 
@@ -153,9 +152,9 @@ esp_err_t LDM::Server::unregisterAllUriHandles(void) {
     return err;
 }
 
-esp_err_t LDM::Server::unregisterAllUriHandles(char* uri) {
+esp_err_t LDM::HTTP_Server::unregisterAllUriHandles(char* uri) {
     if(this->server == NULL) {
-        ESP_LOGE(TAG, "Error registering URI: Server is not initialized");
+        ESP_LOGE(TAG, "Error registering URI: HTTP Server is not initialized");
         return ESP_FAIL;
     }
 
@@ -182,6 +181,6 @@ esp_err_t LDM::Server::unregisterAllUriHandles(char* uri) {
     return err;
 }
 
-bool LDM::Server::isStarted(void) {
+bool LDM::HTTP_Server::isStarted(void) {
     return this->started;
 }
