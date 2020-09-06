@@ -34,6 +34,10 @@ const char * LDM::HTTP_Client::getURL(void) {
     return this->URL.c_str();
 }
 
+std::string LDM::HTTP_Client::getURLString(void) {
+    return this->URL;
+}
+
 esp_err_t LDM::HTTP_Client::setURL(char* URL) {
     this->URL = std::string(URL);
     this->config = {
@@ -43,7 +47,6 @@ esp_err_t LDM::HTTP_Client::setURL(char* URL) {
 }
 
 esp_err_t LDM::HTTP_Client::postJSON(cJSON *message, size_t size) {
-    ESP_LOGI(HTTP_TAG, "Running post_json");
     esp_err_t err = ESP_OK;
 
     if(message != NULL) {

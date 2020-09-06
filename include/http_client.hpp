@@ -18,6 +18,7 @@ public:
     HTTP_Client(char* URL);
     esp_http_client_handle_t getClient(void);
     const char * getURL(void);
+    std::string getURLString(void);
     esp_err_t setURL(char* URL);
     esp_err_t postJSON(cJSON *message, size_t size=0);
     esp_err_t postFormattedJSON(char *message);

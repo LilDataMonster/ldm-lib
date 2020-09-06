@@ -422,7 +422,12 @@ esp_err_t LDM::NVS::getKeyStr(const char *key, char *value, size_t *size) {
     esp_err_t ret = nvs_get_str(nvs_h, key, value, size);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Get Key %s = %s", key, value);
+            // handle call when fetching size
+            if(value == NULL) {
+                ESP_LOGI(TAG, "NVS Get Key %s (size = %d)", key, *size);
+            } else {
+                ESP_LOGI(TAG, "NVS Get Key %s = %s (size = %d)", key, value, *size);
+            }
             break;
         case ESP_ERR_NVS_NOT_FOUND:
             ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
@@ -467,7 +472,7 @@ esp_err_t LDM::NVS::getKeyBlob(const char *key, void *value, size_t *size) {
     esp_err_t ret = nvs_get_blob(nvs_h, key, value, size);
     switch(ret) {
         case ESP_OK:
-            ESP_LOGI(TAG, "NVS Get Key %s Blob", key);
+            ESP_LOGI(TAG, "NVS Get Key %s Blob (size = %d)", key, *size);
             break;
         case ESP_ERR_NVS_NOT_FOUND:
             ESP_LOGE(TAG, "NVS Key Error: The key does not exist");
