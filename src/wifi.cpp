@@ -65,12 +65,10 @@ static int gl_sta_ssid_len;
 
 bool LDM::WiFi::connected = false;
 LDM::WiFi::WiFi() {
-    this->config = {
-
-    };
+    //
 }
 
-esp_err_t LDM::WiFi::init(void) {
+esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     esp_err_t err = ESP_OK;
 
     s_wifi_event_group = xEventGroupCreate();
@@ -94,8 +92,14 @@ esp_err_t LDM::WiFi::init(void) {
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
 
     // setup default ssid/password
-    strcpy((char*)config.sta.ssid, DEFAULT_SSID);
-    strcpy((char*)config.sta.password, DEFAULT_PWD);
+    if(config != NULL) {
+        // std::memcpy(&this->config, config, sizeof(*config));
+        std::strcpy((char*)this->config.sta.ssid, (char*)config->sta.ssid);
+        std::strcpy((char*)this->config.sta.password, (char*)config->sta.password);
+    } else {
+        std::strcpy((char*)this->config.sta.ssid, DEFAULT_SSID);
+        std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
+    }
 
     // setup wifi mode
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -186,6 +190,16 @@ esp_err_t LDM::WiFi::setConfig(wifi_interface_t interface, wifi_config_t *config
     return err;
 }
 
+esp_err_t LDM::WiFi::getConfig(wifi_interface_t interface, wifi_config_t *config) {
+    esp_err_t err = ESP_OK;
+    err = esp_wifi_get_config(interface, config);
+    if(err != ESP_OK) {
+        ESP_LOGE(WIFI_TAG, "%s Getting WiFi Config failed: %s\n", __func__, esp_err_to_name(err));\
+        return err;
+    }
+    return err;
+}
+
 void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     wifi_event_sta_connected_t *event;
     // wifi_mode_t mode;
@@ -197,16 +211,16 @@ void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32
     case WIFI_EVENT_STA_CONNECTED:
         gl_sta_connected = true;
         event = (wifi_event_sta_connected_t*) event_data;
-        memcpy(gl_sta_bssid, event->bssid, 6);
-        memcpy(gl_sta_ssid, event->ssid, event->ssid_len);
+        std::memcpy(gl_sta_bssid, event->bssid, 6);
+        std::memcpy(gl_sta_ssid, event->ssid, event->ssid_len);
         gl_sta_ssid_len = event->ssid_len;
         break;
     case WIFI_EVENT_STA_DISCONNECTED:
         /* This is a workaround as ESP32 WiFi libs don't currently
         auto-reassociate. */
         gl_sta_connected = false;
-        memset(gl_sta_ssid, 0, 32);
-        memset(gl_sta_bssid, 0, 6);
+        std::memset(gl_sta_ssid, 0, 32);
+        std::memset(gl_sta_bssid, 0, 6);
         gl_sta_ssid_len = 0;
         esp_wifi_connect();
         xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);

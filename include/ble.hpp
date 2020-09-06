@@ -29,6 +29,7 @@ public:
     // BluFi
     esp_err_t registerBlufiCallback(esp_blufi_callbacks_t *callbacks);
     esp_err_t initBlufi(void);
+    esp_err_t initBlufi(wifi_config_t *wifi_config);
     esp_err_t deinitBlufi(void);
     uint16_t getBlufiVersion(void);
     static void defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
