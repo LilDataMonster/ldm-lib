@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <string>
 #include <esp_log.h>
 #include <esp_event.h>
 
@@ -15,12 +16,30 @@
 #define HTTP_TAG "LDM-LIB:HTTP_CLIENT"
 
 LDM::HTTP_Client::HTTP_Client(char* URL) {
+    this->URL = std::string(URL);
+
     // create http client
     this->config = {
-        .url = URL,
+        .url = this->URL.c_str(),
         .user_data = this->response_buffer,
     };
     this->client = esp_http_client_init(&this->config);
+}
+
+esp_http_client_handle_t LDM::HTTP_Client::getClient(void) {
+    return this->client;
+}
+
+const char * LDM::HTTP_Client::getURL(void) {
+    return this->URL.c_str();
+}
+
+esp_err_t LDM::HTTP_Client::setURL(char* URL) {
+    this->URL = std::string(URL);
+    this->config = {
+        .url = this->URL.c_str(),
+    };
+    return ESP_OK;
 }
 
 esp_err_t LDM::HTTP_Client::postJSON(cJSON *message, size_t size) {
