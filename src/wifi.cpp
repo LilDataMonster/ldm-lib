@@ -13,7 +13,7 @@
 // project headers
 #include <wifi.hpp>
 
-#define WIFI_TAG "LDM:WIFI"
+#define WIFI_TAG "LDM-LIB:WIFI"
 
 #define ERR_CHECK(_x, _msg) \
 if(_x != ESP_OK) {\
@@ -58,7 +58,7 @@ esp_ip4_addr_t LDM::WiFi::netmask;
 esp_ip4_addr_t LDM::WiFi::gateway;
 
 static bool gl_sta_connected = false;
-static bool ble_is_connected = false;
+// static bool ble_is_connected = false;
 static uint8_t gl_sta_bssid[6];
 static uint8_t gl_sta_ssid[32];
 static int gl_sta_ssid_len;
@@ -188,7 +188,7 @@ esp_err_t LDM::WiFi::setConfig(wifi_interface_t interface, wifi_config_t *config
 
 void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     wifi_event_sta_connected_t *event;
-    wifi_mode_t mode;
+    // wifi_mode_t mode;
 
     switch(event_id) {
     case WIFI_EVENT_STA_START:
@@ -269,7 +269,7 @@ void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32
 }
 
 void LDM::WiFi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-    wifi_mode_t mode;
+    // wifi_mode_t mode;
 
     switch(event_id) {
     case IP_EVENT_STA_GOT_IP: {

@@ -4,7 +4,7 @@
 
 #include <nvs.hpp>
 
-#define TAG "LDM-NVS"
+#define TAG "LDM-LIB:NVS"
 
 LDM::NVS::NVS(nvs_handle_t nvs_h) {
     if(nvs_h != -1) {

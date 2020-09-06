@@ -7,7 +7,7 @@
 #include <bluetooth.hpp>
 #include <ble.hpp>
 
-#define TAG "LDM:BLE"
+#define TAG "LDM-LIB:BLE"
 
 #define ERR_CHECK(_x, _msg) \
 if(_x != ESP_OK) {\

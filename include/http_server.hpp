@@ -4,8 +4,6 @@
 #include <esp_http_server.h>
 #include <vector>
 
-#define HTTP_TAG "LDM:HTTP_SERVER"
-
 #ifndef ESP_VFS_PATH_MAX
 #define ESP_VFS_PATH_MAX 10
 #endif
@@ -20,11 +18,10 @@ typedef struct rest_server_context {
 } rest_server_context_t;
 
 namespace LDM {
-class Server {
+class HTTP_Server {
 public:
-    Server(char* base_path);
-    // Server();
-    ~Server();
+    HTTP_Server(char* base_path);
+    ~HTTP_Server();
 
     // the WiFi stack must be initialized before starting the server
     esp_err_t startServer(void);

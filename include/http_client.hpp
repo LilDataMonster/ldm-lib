@@ -11,9 +11,9 @@
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 
 namespace LDM {
-class HTTP {
+class HTTP_Client {
 public:
-    HTTP(char* URL);
+    HTTP_Client(char* URL);
     esp_http_client_handle_t getClient(void) {
         return this->client;
     }

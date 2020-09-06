@@ -3,7 +3,7 @@
 
 #include <led.hpp>
 
-#define TAG "LDM:LED"
+#define TAG "LDM-LIB:LED"
 
 #define ERR_CHECK(_x, _msg) \
 if(_x != ESP_OK) {\

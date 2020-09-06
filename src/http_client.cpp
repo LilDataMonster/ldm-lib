@@ -10,11 +10,11 @@
 #include <esp_http_client.h>
 
 // project headers
-#include <http.hpp>
+#include <http_client.hpp>
 
-#define HTTP_TAG "HTTP"
+#define HTTP_TAG "LDM-LIB:HTTP_CLIENT"
 
-LDM::HTTP::HTTP(char* URL) {
+LDM::HTTP_Client::HTTP_Client(char* URL) {
     // create http client
     this->config = {
         .url = URL,
@@ -23,7 +23,7 @@ LDM::HTTP::HTTP(char* URL) {
     this->client = esp_http_client_init(&this->config);
 }
 
-esp_err_t LDM::HTTP::postJSON(cJSON *message, size_t size) {
+esp_err_t LDM::HTTP_Client::postJSON(cJSON *message, size_t size) {
     ESP_LOGI(HTTP_TAG, "Running post_json");
     esp_err_t err = ESP_OK;
 
@@ -37,7 +37,7 @@ esp_err_t LDM::HTTP::postJSON(cJSON *message, size_t size) {
             // post_data = (char*)malloc(sizeof(char)*size);
             // cJSON_PrintPreallocated(message, post_data, size, 1);
         }
-        
+
         // post data
         this->postFormattedJSON(post_data);
 
@@ -50,7 +50,7 @@ esp_err_t LDM::HTTP::postJSON(cJSON *message, size_t size) {
     return err;
 }
 
-esp_err_t LDM::HTTP::postFormattedJSON(char *message) {
+esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     esp_err_t err = ESP_OK;
 
     ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
@@ -63,11 +63,11 @@ esp_err_t LDM::HTTP::postFormattedJSON(char *message) {
         // post JSON message
         err = esp_http_client_perform(this->client);
         if (err == ESP_OK) {
-            ESP_LOGI(HTTP_TAG, "HTTP POST Status = %d, content_length = %d",
+            ESP_LOGI(HTTP_TAG, "HTTP_Client POST Status = %d, content_length = %d",
                     esp_http_client_get_status_code(this->client),
                     esp_http_client_get_content_length(this->client));
         } else {
-            ESP_LOGE(HTTP_TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+            ESP_LOGE(HTTP_TAG, "HTTP_Client POST request failed: %s", esp_err_to_name(err));
         }
     } else {
         ESP_LOGE(HTTP_TAG, "Formatted Message is NULL");

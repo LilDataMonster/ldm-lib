@@ -4,7 +4,7 @@
 
 #include <sleep.hpp>
 
-#define TAG "LDM-SLEEP"
+#define TAG "LDM-LIB:SLEEP"
 
 RTC_DATA_ATTR struct timeval LDM::Sleep::sleep_enter_time;
 
