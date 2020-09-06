@@ -141,6 +141,9 @@ esp_err_t LDM::WiFi::init(void) {
 
 esp_err_t LDM::WiFi::deinit(void) {
     esp_err_t err = ESP_OK;
+
+    vEventGroupDelete(s_wifi_event_group);
+
     err |= esp_wifi_stop();
     if(err != ESP_OK) {
         ESP_LOGE(WIFI_TAG, "%s Stopping WiFi failed: %s\n", __func__, esp_err_to_name(err));\
