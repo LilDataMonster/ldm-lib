@@ -45,9 +45,7 @@ if(_x != ESP_OK) {\
 //  * - we failed to connect after the maximum amount of retries */
 // #define WIFI_CONNECTED_BIT BIT0
 // #define WIFI_FAIL_BIT      BIT1
-// const int CONNECTED_BIT = BIT0;
-#define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT      BIT1
+const int CONNECTED_BIT = BIT0;
 
 #define MAX_RETRY      5 //CONFIG_ESP_MAXIMUM_RETRY
 
@@ -73,147 +71,76 @@ LDM::WiFi::WiFi() {
 }
 
 esp_err_t LDM::WiFi::init(wifi_config_t *config) {
-
     esp_err_t err = ESP_OK;
 
     s_wifi_event_group = xEventGroupCreate();
 
+    // init netif
     ESP_ERROR_CHECK(esp_netif_init());
 
+    // create event group
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    // TODO: Add AP mode support
+    this->netif = esp_netif_create_default_wifi_sta();
+    assert(this->netif);
 
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &event_handler,
-                                                        // &wifi_event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        // &event_handler,
-                                                        &ip_event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
+    // init wifi
+    init_config = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&this->init_config));
 
-    wifi_config_t wifi_config = {};
-    std::strcpy((char*)wifi_config.sta.ssid, (char*)config->sta.ssid);
-    std::strcpy((char*)wifi_config.sta.password, (char*)config->sta.password);
-    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
-    wifi_config.sta.pmf_cfg.capable = true;
-    wifi_config.sta.pmf_cfg.required = false;
+    // add event handlers
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
 
-    // std::strcpy((char*)wifi_config.sta.ssid, (char*)config->sta.ssid);
-    // std::strcpy((char*)wifi_config.sta.password, (char*)config->sta.password);
+    // setup default ssid/password
+    this->config = {};
+    if(config != NULL) {
+        // std::memcpy(&this->config, config, sizeof(*config));
+        std::strcpy((char*)this->config.sta.ssid, (char*)config->sta.ssid);
+        std::strcpy((char*)this->config.sta.password, (char*)config->sta.password);
+    } else {
+        std::strcpy((char*)this->config.sta.ssid, DEFAULT_SSID);
+        std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
+    }
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
-    // ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, config));
-    ESP_ERROR_CHECK(esp_wifi_start() );
+    // setup wifi mode
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->config));
 
-    ESP_LOGI(WIFI_TAG, "wifi_init_sta finished.");
+    // start wifi
+    ESP_ERROR_CHECK(esp_wifi_start());
 
-    // /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-    //  * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+    /* init wifi as sta and set power save mode */
+    ESP_LOGI(WIFI_TAG, "Setting wifi power save mode");
+    esp_wifi_set_ps(this->power_save_mode);
+
+    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+     * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+    // ESP_LOGI(WIFI_TAG, "Waiting for event bits");
     // EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
-    //         WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-    //         pdFALSE,
-    //         pdFALSE,
-    //         portMAX_DELAY);
+    //     WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+    //     pdFALSE,
+    //     pdFALSE,
+    //     portMAX_DELAY);
     //
-    // /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
-    //  * happened. */
-    // if (bits & WIFI_CONNECTED_BIT) {
-    //     ESP_LOGI(WIFI_TAG, "connected to ap SSID:%s password:%s",
-    //              (char*)config->sta.ssid, (char*)config->sta.password);
-    //              // EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-    // } else if (bits & WIFI_FAIL_BIT) {
-    //     ESP_LOGI(WIFI_TAG, "Failed to connect to SSID:%s, password:%s",
-    //              (char*)config->sta.ssid, (char*)config->sta.password);
-    //              // EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    // /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually happened. */
+    // if(bits & WIFI_CONNECTED_BIT) {
+    //     ESP_LOGI(WIFI_TAG, "Connected to AP SSID:%s password:%s",
+    //         DEFAULT_SSID, DEFAULT_PWD);
+    // } else if(bits & WIFI_FAIL_BIT) {
+    //     ESP_LOGE(WIFI_TAG, "Failed to connect to SSID:%s, password:%s",
+    //         DEFAULT_SSID, DEFAULT_PWD);
+    //     err = ESP_FAIL;
     // } else {
     //     ESP_LOGE(WIFI_TAG, "UNEXPECTED EVENT");
+    //     err = ESP_ERR_INVALID_STATE;
     // }
 
-    /* The event will not be processed after unregister */
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
-    vEventGroupDelete(s_wifi_event_group);
-    // esp_err_t err = ESP_OK;
-    //
-    // s_wifi_event_group = xEventGroupCreate();
-    //
-    // // init netif
-    // ESP_ERROR_CHECK(esp_netif_init());
-    //
-    // // create event group
-    // ESP_ERROR_CHECK(esp_event_loop_create_default());
-    //
-    // // TODO: Add AP mode support
-    // this->netif = esp_netif_create_default_wifi_sta();
-    // assert(this->netif);
-    //
-    // // init wifi
-    // init_config = WIFI_INIT_CONFIG_DEFAULT();
-    // ESP_ERROR_CHECK(esp_wifi_init(&this->init_config));
-    //
-    // // add event handlers
-    // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
-    // ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
-    //
-    // // setup default ssid/password
-    // this->config = {};
-    // if(config != NULL) {
-    //     // std::memcpy(&this->config, config, sizeof(*config));
-    //     std::strcpy((char*)this->config.sta.ssid, (char*)config->sta.ssid);
-    //     std::strcpy((char*)this->config.sta.password, (char*)config->sta.password);
-    // } else {
-    //     std::strcpy((char*)this->config.sta.ssid, DEFAULT_SSID);
-    //     std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
-    // }
-    //
-    // // setup wifi mode
-    // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    // ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->config));
-    //
-    // // start wifi
-    // ESP_ERROR_CHECK(esp_wifi_start());
-    //
-    // /* init wifi as sta and set power save mode */
-    // ESP_LOGI(WIFI_TAG, "Setting wifi power save mode");
-    // esp_wifi_set_ps(this->power_save_mode);
-    //
-    // /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-    //  * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
-    // // ESP_LOGI(WIFI_TAG, "Waiting for event bits");
-    // // EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
-    // //     WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-    // //     pdFALSE,
-    // //     pdFALSE,
-    // //     portMAX_DELAY);
-    // //
-    // // /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually happened. */
-    // // if(bits & WIFI_CONNECTED_BIT) {
-    // //     ESP_LOGI(WIFI_TAG, "Connected to AP SSID:%s password:%s",
-    // //         DEFAULT_SSID, DEFAULT_PWD);
-    // // } else if(bits & WIFI_FAIL_BIT) {
-    // //     ESP_LOGE(WIFI_TAG, "Failed to connect to SSID:%s, password:%s",
-    // //         DEFAULT_SSID, DEFAULT_PWD);
-    // //     err = ESP_FAIL;
-    // // } else {
-    // //     ESP_LOGE(WIFI_TAG, "UNEXPECTED EVENT");
-    // //     err = ESP_ERR_INVALID_STATE;
-    // // }
-    //
-    // // /* The event will not be processed after unregister */
-    // // ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
-    // // ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
-    // // vEventGroupDelete(s_wifi_event_group);
+    // /* The event will not be processed after unregister */
+    // ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+    // ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+    // vEventGroupDelete(s_wifi_event_group);
     return err;
 }
 
@@ -300,7 +227,7 @@ void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32
         std::memset(gl_sta_bssid, 0, 6);
         gl_sta_ssid_len = 0;
         esp_wifi_connect();
-        xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
         break;
     // case WIFI_EVENT_AP_START:
     //     esp_wifi_get_mode(&mode);
@@ -366,7 +293,7 @@ void LDM::WiFi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t
     case IP_EVENT_STA_GOT_IP: {
         // esp_blufi_extra_info_t info;
         //
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
         // esp_wifi_get_mode(&mode);
         //
         // memset(&info, 0, sizeof(esp_blufi_extra_info_t));

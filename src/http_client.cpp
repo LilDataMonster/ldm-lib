@@ -26,6 +26,10 @@ LDM::HTTP_Client::HTTP_Client(char* URL) {
     this->client = esp_http_client_init(&this->config);
 }
 
+LDM::HTTP_Client::~HTTP_Client(void) {
+    this->deinit();
+}
+
 esp_http_client_handle_t LDM::HTTP_Client::getClient(void) {
     return this->client;
 }
@@ -38,11 +42,30 @@ std::string LDM::HTTP_Client::getURLString(void) {
     return this->URL;
 }
 
+esp_err_t LDM::HTTP_Client::deinit(void) {
+    esp_err_t err = esp_http_client_close(this->client);
+    if(err != ESP_OK) {
+        ESP_LOGE(HTTP_TAG, "Failed to close HTTP Client");
+    }
+
+    err = esp_http_client_cleanup(this->client);
+    if(err != ESP_OK) {
+        ESP_LOGE(HTTP_TAG, "Failed to cleanup HTTP Client");
+    }
+
+    return err;
+}
+
 esp_err_t LDM::HTTP_Client::setURL(char* URL) {
     this->URL = std::string(URL);
     this->config = {
         .url = this->URL.c_str(),
     };
+
+    // reinitialize client with new configuration
+    this->deinit();
+    this->client = esp_http_client_init(&this->config);
+
     return ESP_OK;
 }
 
@@ -75,6 +98,11 @@ esp_err_t LDM::HTTP_Client::postJSON(cJSON *message, size_t size) {
 esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     esp_err_t err = ESP_OK;
 
+    // size_t url_len = 0;
+    // char url_string[64];
+    // err = esp_http_client_get_url(this->client, &url_string, 64*sizeof(char));
+    // ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
+    ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
     ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
 
     if(message != NULL) {
