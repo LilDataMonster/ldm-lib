@@ -66,6 +66,8 @@ static int gl_sta_ssid_len;
 bool LDM::WiFi::connected = false;
 LDM::WiFi::WiFi() {
     //
+    this->config = {};
+    this->power_save_mode = DEFAULT_PS_MODE;
 }
 
 esp_err_t LDM::WiFi::init(wifi_config_t *config) {
@@ -92,6 +94,7 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
 
     // setup default ssid/password
+    this->config = {};
     if(config != NULL) {
         // std::memcpy(&this->config, config, sizeof(*config));
         std::strcpy((char*)this->config.sta.ssid, (char*)config->sta.ssid);
@@ -104,8 +107,6 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     // setup wifi mode
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->config));
-
-    this->power_save_mode = DEFAULT_PS_MODE;
 
     // start wifi
     ESP_ERROR_CHECK(esp_wifi_start());
