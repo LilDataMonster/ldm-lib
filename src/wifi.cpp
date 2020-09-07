@@ -46,6 +46,8 @@ if(_x != ESP_OK) {\
 // #define WIFI_CONNECTED_BIT BIT0
 // #define WIFI_FAIL_BIT      BIT1
 // const int CONNECTED_BIT = BIT0;
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
 
 #define MAX_RETRY      5 //CONFIG_ESP_MAXIMUM_RETRY
 
@@ -66,14 +68,10 @@ static int gl_sta_ssid_len;
 bool LDM::WiFi::connected = false;
 LDM::WiFi::WiFi() {
     //
-    this->config = {
-        //
-    };
+    this->config = {};
     this->power_save_mode = DEFAULT_PS_MODE;
 }
 
-#define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT      BIT1
 esp_err_t LDM::WiFi::init(wifi_config_t *config) {
 
     esp_err_t err = ESP_OK;
@@ -93,32 +91,17 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
                                                         ESP_EVENT_ANY_ID,
                                                         &event_handler,
+                                                        // &wifi_event_handler,
                                                         NULL,
                                                         &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
                                                         IP_EVENT_STA_GOT_IP,
-                                                        &event_handler,
+                                                        // &event_handler,
+                                                        &ip_event_handler,
                                                         NULL,
                                                         &instance_got_ip));
 
-    // wifi_config_t wifi_config = {
-    //     .sta = {
-    //         .ssid = "DavidsTheBest",
-    //         .password = "Besties2",
-    //         /* Setting a password implies station will connect to all security modes including WEP/WPA.
-    //          * However these modes are deprecated and not advisable to be used. Incase your Access point
-    //          * doesn't support WPA2, these mode can be enabled by commenting below line */
-	  //    .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-    //
-    //         .pmf_cfg = {
-    //             .capable = true,
-    //             .required = false
-    //         },
-    //     },
-    // };
     wifi_config_t wifi_config = {};
-    // wifi_config.sta.ssid = "DavidsTheBest";
-    // wifi_config.sta.password = "Besties2";
     std::strcpy((char*)wifi_config.sta.ssid, (char*)config->sta.ssid);
     std::strcpy((char*)wifi_config.sta.password, (char*)config->sta.password);
     wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
@@ -161,7 +144,6 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     vEventGroupDelete(s_wifi_event_group);
-
     // esp_err_t err = ESP_OK;
     //
     // s_wifi_event_group = xEventGroupCreate();
@@ -181,19 +163,11 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     // ESP_ERROR_CHECK(esp_wifi_init(&this->init_config));
     //
     // // add event handlers
-    // // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
-    // // ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
-    //
-    // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    // ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
-    //
-    // // esp_event_handler_instance_t instance_any_id;
-    // // esp_event_handler_instance_t instance_got_ip;
-    // // ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
-    // // ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
-    //
+    // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+    // ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
     //
     // // setup default ssid/password
+    // this->config = {};
     // if(config != NULL) {
     //     // std::memcpy(&this->config, config, sizeof(*config));
     //     std::strcpy((char*)this->config.sta.ssid, (char*)config->sta.ssid);
@@ -203,13 +177,9 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     //     std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
     // }
     //
-    // ESP_LOGI(WIFI_TAG, "Initializing wifi ssid: %s, password: %s", (char*)this->config.sta.ssid, (char*)this->config.sta.password);
-    //
     // // setup wifi mode
     // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     // ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->config));
-    //
-    // this->power_save_mode = DEFAULT_PS_MODE;
     //
     // // start wifi
     // ESP_ERROR_CHECK(esp_wifi_start());
@@ -429,58 +399,36 @@ void LDM::WiFi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t
     return;
 }
 
-void LDM::WiFi::event_handler(void* arg, esp_event_base_t event_base,
-                                int32_t event_id, void* event_data) {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+void LDM::WiFi::event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        ESP_LOGI(WIFI_TAG, "Attempting to connect to AP");
         esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < 4) {
+    } else if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        esp_wifi_connect();
+        if(s_retry_num < MAX_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(WIFI_TAG, "retry to connect to the AP");
+            ESP_LOGI(WIFI_TAG, "Retrying to connect to the AP");
         } else {
-            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            // xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            ESP_LOGE(WIFI_TAG, "Connecting to the AP failed");
+            s_retry_num = 0;
         }
-        ESP_LOGI(WIFI_TAG,"connect to the AP fail");
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+    } else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(WIFI_TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(WIFI_TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(WIFI_TAG, "Netmask IP: " IPSTR, IP2STR(&event->ip_info.netmask));
+        ESP_LOGI(WIFI_TAG, "Gateway IP: " IPSTR, IP2STR(&event->ip_info.gw));
+
+        LDM::WiFi::ipv4_address = *(&event->ip_info.ip);
+        LDM::WiFi::netmask = *(&event->ip_info.netmask);
+        LDM::WiFi::gateway = *(&event->ip_info.gw);
+
         LDM::WiFi::connected = true;
         s_retry_num = 0;
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        // xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
-
-// void LDM::WiFi::event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-//     if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-//         ESP_LOGI(WIFI_TAG, "Attempting to connect to AP");
-//         esp_wifi_connect();
-//     } else if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-//         esp_wifi_connect();
-//         if(s_retry_num < MAX_RETRY) {
-//             esp_wifi_connect();
-//             s_retry_num++;
-//             ESP_LOGI(WIFI_TAG, "Retrying to connect to the AP");
-//         } else {
-//             // xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-//             ESP_LOGE(WIFI_TAG, "Connecting to the AP failed");
-//             s_retry_num = 0;
-//         }
-//     } else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-//         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-//         ESP_LOGI(WIFI_TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
-//         ESP_LOGI(WIFI_TAG, "Netmask IP: " IPSTR, IP2STR(&event->ip_info.netmask));
-//         ESP_LOGI(WIFI_TAG, "Gateway IP: " IPSTR, IP2STR(&event->ip_info.gw));
-//
-//         LDM::WiFi::ipv4_address = *(&event->ip_info.ip);
-//         LDM::WiFi::netmask = *(&event->ip_info.netmask);
-//         LDM::WiFi::gateway = *(&event->ip_info.gw);
-//
-//         LDM::WiFi::connected = true;
-//         s_retry_num = 0;
-//         // xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-//     }
-// }
 
 esp_err_t LDM::WiFi::setWiFiMode(wifi_mode_t mode) {
     esp_err_t err = esp_wifi_set_mode(mode);
