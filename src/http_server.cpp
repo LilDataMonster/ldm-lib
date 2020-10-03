@@ -51,12 +51,13 @@ esp_err_t LDM::HTTP_Server::stopServer(void) {
 }
 
 esp_err_t LDM::HTTP_Server::startServer(void) {
-    ESP_LOGI(TAG, "Starting HTTP Server");
+    ESP_LOGI(TAG, "Attempting to start HTTP Server");
     esp_err_t err = httpd_start(&this->server, &this->config);
     if(err != ESP_OK) {
-        ESP_LOGE(TAG, "Error Starting HTTP Server %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Failed to start HTTP Server %s", esp_err_to_name(err));
         return err;
     }
+    ESP_LOGI(TAG, "HTTP Server successfully started");
     this->started = true;
     return ESP_OK;
 }
