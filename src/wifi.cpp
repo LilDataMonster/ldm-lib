@@ -373,6 +373,18 @@ bool LDM::WiFi::isConnected(void) {
     return LDM::WiFi::connected;
 }
 
+esp_err_t LDM::WiFi::getIpv4(uint8_t* ipv4) {
+    if(isConnected()) {
+        ipv4[0] = esp_ip4_addr_get_byte(&LDM::WiFi::ipv4_address, 0);
+        ipv4[1] = esp_ip4_addr_get_byte(&LDM::WiFi::ipv4_address, 1);
+        ipv4[2] = esp_ip4_addr_get_byte(&LDM::WiFi::ipv4_address, 2);
+        ipv4[3] = esp_ip4_addr_get_byte(&LDM::WiFi::ipv4_address, 3);
+        return ESP_OK;
+    } else {
+        return ESP_FAIL;
+    }
+}
+
 cJSON * LDM::WiFi::buildJson(void) {
     cJSON *json_root = cJSON_CreateObject();
 

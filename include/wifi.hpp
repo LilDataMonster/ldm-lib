@@ -21,6 +21,7 @@ public:
     esp_err_t disconnect(void);
     esp_err_t setConfig(wifi_interface_t interface, wifi_config_t *config);
     esp_err_t getConfig(wifi_interface_t interface, wifi_config_t *config);
+    esp_err_t getIpv4(uint8_t *ipv4);
 
     esp_err_t setWiFiMode(wifi_mode_t mode);
     esp_err_t getWiFiMode(wifi_mode_t *mode);
