@@ -164,7 +164,9 @@ esp_err_t LDM::Bluetooth::disableModemSleep(void) {
 
 bool LDM::Bluetooth::isSleeping(void) {
     if(this->controller_initialized) {
-        return esp_bt_controller_is_sleeping();
+        // TODO: Fix API call
+        // return esp_bt_controller_is_sleeping();
+        return ESP_OK;
     } else {
         ESP_LOGE(TAG, "%s Bluetooth sleep check error! Bluetooth controller is not enabled\n", __func__);
         return ESP_FAIL;
@@ -173,7 +175,8 @@ bool LDM::Bluetooth::isSleeping(void) {
 
 void LDM::Bluetooth::requestWakeup(void) {
     if(this->controller_initialized) {
-        esp_bt_controller_wakeup_request();
+        // TODO: Fix API call
+        // esp_bt_controller_wakeup_request();
     } else {
         ESP_LOGE(TAG, "%s Bluetooth sleep check error! Bluetooth controller is not enabled\n", __func__);
     }
