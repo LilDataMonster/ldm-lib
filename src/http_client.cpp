@@ -103,9 +103,9 @@ esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     // err = esp_http_client_get_url(this->client, &url_string, 64*sizeof(char));
     // ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
     ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
-    ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
 
     if(message != NULL) {
+        ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
         esp_http_client_set_method(this->client, HTTP_METHOD_POST);
         esp_http_client_set_header(this->client, "Content-Type", "application/json");
         esp_http_client_set_post_field(this->client, message, strlen(message));
