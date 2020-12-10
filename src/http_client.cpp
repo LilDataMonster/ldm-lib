@@ -23,7 +23,7 @@ LDM::HTTP_Client::HTTP_Client(char* URL) {
         .url = this->URL.c_str(),
         .user_data = this->response_buffer,
     };
-    this->client = esp_http_client_init(&this->config);
+    // this->client = esp_http_client_init(&this->config);
 }
 
 LDM::HTTP_Client::~HTTP_Client(void) {
@@ -104,6 +104,13 @@ esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     // ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
     ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
 
+    // initialize http client
+    this->client = esp_http_client_init(&this->config);
+    if(this->client == NULL) {
+        ESP_LOGE(HTTP_TAG, "Failed to initialize http client: %s", esp_err_to_name(err));
+        return ESP_FAIL;
+    }
+
     if(message != NULL) {
         ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
         esp_http_client_set_method(this->client, HTTP_METHOD_POST);
@@ -122,5 +129,12 @@ esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     } else {
         ESP_LOGE(HTTP_TAG, "Formatted Message is NULL");
     }
+
+    // cleanup http client
+    err = esp_http_client_cleanup(this->client);
+    if(err != ESP_OK) {
+        ESP_LOGE(HTTP_TAG, "Failed to clean up http client: %s", esp_err_to_name(err));
+    }
+
     return err;
 }
