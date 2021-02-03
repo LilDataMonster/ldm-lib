@@ -96,7 +96,7 @@ cJSON* LDM::System::buildJson(void) {
     switch(this->chip_info.model) {
         CASE_STRING_MACRO(json_chip_info, "model", CHIP_ESP32)
         CASE_STRING_MACRO(json_chip_info, "model", CHIP_ESP32S2)
-        CASE_STRING_MACRO(json_chip_info, "model", CHIP_ESP32S3)
+        //CASE_STRING_MACRO(json_chip_info, "model", CHIP_ESP32S3)
     }
     cJSON *json_chip_features = cJSON_AddArrayToObject(json_chip_info, "chip_features");
     if(this->chip_info.features | CHIP_FEATURE_EMB_FLASH) {
