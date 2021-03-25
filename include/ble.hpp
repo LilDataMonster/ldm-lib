@@ -12,6 +12,8 @@ namespace LDM {
 class BLE : public Bluetooth {
 public:
     BLE(char* device_name);
+    ~BLE();
+    
     esp_err_t init(void);
     esp_err_t deinit(void);
 

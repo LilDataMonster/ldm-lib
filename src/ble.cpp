@@ -32,6 +32,10 @@ LDM::BLE::BLE(char* device_name) : Bluetooth(device_name) {
     this->connected = false;
 }
 
+LDM::BLE::~BLE(){
+  
+}
+
 esp_err_t LDM::BLE::init(void) {
     // initialize bluetooth in BLE mode
     // esp_err_t err = bluetooth.init(ESP_BT_MODE_BLE);

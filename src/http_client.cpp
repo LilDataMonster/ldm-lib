@@ -2,6 +2,7 @@
 #include <string>
 #include <esp_log.h>
 #include <esp_event.h>
+#include <esp_err.h>
 
 // JSON formatting
 #include <cJSON.h>
@@ -45,12 +46,12 @@ std::string LDM::HTTP_Client::getURLString(void) {
 esp_err_t LDM::HTTP_Client::deinit(void) {
     esp_err_t err = esp_http_client_close(this->client);
     if(err != ESP_OK) {
-        ESP_LOGE(HTTP_TAG, "Failed to close HTTP Client");
+        ESP_LOGE(HTTP_TAG, "Failed to close HTTP Client: %s", esp_err_to_name(err));
     }
 
     err = esp_http_client_cleanup(this->client);
     if(err != ESP_OK) {
-        ESP_LOGE(HTTP_TAG, "Failed to cleanup HTTP Client");
+        ESP_LOGE(HTTP_TAG, "Failed to cleanup HTTP Client: %s", esp_err_to_name(err));
     }
 
     return err;

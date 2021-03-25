@@ -50,7 +50,7 @@ const int CONNECTED_BIT = BIT0;
 #define MAX_RETRY      5 //CONFIG_ESP_MAXIMUM_RETRY
 
 // /* FreeRTOS event group to signal when we are connected*/
-static EventGroupHandle_t s_wifi_event_group;
+// static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
 esp_ip4_addr_t LDM::WiFi::ipv4_address;
@@ -73,7 +73,7 @@ LDM::WiFi::WiFi() {
 esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     esp_err_t err = ESP_OK;
 
-    s_wifi_event_group = xEventGroupCreate();
+    // s_wifi_event_group = xEventGroupCreate();
 
     // init netif
     ESP_ERROR_CHECK(esp_netif_init());
@@ -147,21 +147,21 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
 esp_err_t LDM::WiFi::deinit(void) {
     esp_err_t err = ESP_OK;
 
-    vEventGroupDelete(s_wifi_event_group);
+    // vEventGroupDelete(s_wifi_event_group);
 
     err |= esp_wifi_stop();
     if(err != ESP_OK) {
-        ESP_LOGE(WIFI_TAG, "%s Stopping WiFi failed: %s\n", __func__, esp_err_to_name(err));\
+        ESP_LOGE(WIFI_TAG, "%s Stopping WiFi failed: %s\n", __func__, esp_err_to_name(err));
         return err;
     }
     err |= esp_wifi_deinit();
     if(err != ESP_OK) {
-        ESP_LOGE(WIFI_TAG, "%s Deinitialize WiFi failed: %s\n", __func__, esp_err_to_name(err));\
+        ESP_LOGE(WIFI_TAG, "%s Deinitialize WiFi failed: %s\n", __func__, esp_err_to_name(err));
         return err;
     }
     err |= esp_netif_deinit();
     if(err != ESP_OK) {
-        ESP_LOGE(WIFI_TAG, "%s Deinitialize Network Stack failed: %s\n", __func__, esp_err_to_name(err));\
+        ESP_LOGE(WIFI_TAG, "%s Deinitialize Network Stack failed: %s\n", __func__, esp_err_to_name(err));
         return err;
     }
     // err |= esp_netif_destroy(this->netif);
@@ -227,7 +227,7 @@ void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32
         std::memset(gl_sta_bssid, 0, 6);
         gl_sta_ssid_len = 0;
         esp_wifi_connect();
-        xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
+        // xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
         break;
     // case WIFI_EVENT_AP_START:
     //     esp_wifi_get_mode(&mode);
@@ -293,7 +293,7 @@ void LDM::WiFi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t
     case IP_EVENT_STA_GOT_IP: {
         // esp_blufi_extra_info_t info;
         //
-        xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
+        // xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
         // esp_wifi_get_mode(&mode);
         //
         // memset(&info, 0, sizeof(esp_blufi_extra_info_t));

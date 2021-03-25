@@ -31,7 +31,7 @@ LDM::Bluetooth::Bluetooth(char* device_name) {
 
 LDM::Bluetooth::~Bluetooth() {
     //
-    this->deinit();
+    // this->deinit();
 }
 
 esp_err_t LDM::Bluetooth::init(esp_bt_mode_t bt_mode) {
