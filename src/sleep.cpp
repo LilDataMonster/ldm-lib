@@ -52,22 +52,22 @@ esp_sleep_source_t LDM::Sleep::getWakeupCause(void) {
             ESP_LOGI(TAG, "Wakeup caused by UART (light sleep only)");
             break;
         }
-        case ESP_SLEEP_WAKEUP_WIFI: {
-            ESP_LOGI(TAG, "Wakeup caused by WIFI (light sleep only)");
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_BT: {
-            ESP_LOGI(TAG, "Wakeup caused by BT (light sleep only)");
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_COCPU: {
-            ESP_LOGI(TAG, "Wakeup caused by COCPU int");
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_COCPU_TRAP_TRIG: {
-            ESP_LOGI(TAG, "Wakeup caused by COCPU crash");
-            break;
-        }
+        // case ESP_SLEEP_WAKEUP_WIFI: {
+        //     ESP_LOGI(TAG, "Wakeup caused by WIFI (light sleep only)");
+        //     break;
+        // }
+        // case ESP_SLEEP_WAKEUP_BT: {
+        //     ESP_LOGI(TAG, "Wakeup caused by BT (light sleep only)");
+        //     break;
+        // }
+        // case ESP_SLEEP_WAKEUP_COCPU: {
+        //     ESP_LOGI(TAG, "Wakeup caused by COCPU int");
+        //     break;
+        // }
+        // case ESP_SLEEP_WAKEUP_COCPU_TRAP_TRIG: {
+        //     ESP_LOGI(TAG, "Wakeup caused by COCPU crash");
+        //     break;
+        // }
         default:
             ESP_LOGI(TAG, "Not a deep sleep reset");
     }
