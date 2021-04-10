@@ -20,16 +20,52 @@ esp_sleep_source_t LDM::Sleep::getWakeupCause(void) {
 
     esp_sleep_source_t cause = esp_sleep_get_wakeup_cause();
     switch(cause) {
+        case ESP_SLEEP_WAKEUP_UNDEFINED: {
+            ESP_LOGI(TAG, "Wakeup was not caused by exit from deep sleep");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_EXT0: {
+            ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_IO");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_EXT1: {
+            ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_CNTL");
+            break;
+        }
         case ESP_SLEEP_WAKEUP_TIMER: {
-            ESP_LOGI(TAG, "Wake up from timer. Time spent in deep sleep: %dms", sleep_time_ms);
+            ESP_LOGI(TAG, "Wakeup caused by timer. Time spent in deep sleep: %dms", sleep_time_ms);
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_TOUCHPAD: {
+            ESP_LOGI(TAG, "Wakeup caused by touchpad");
             break;
         }
         case ESP_SLEEP_WAKEUP_ULP: {
-            ESP_LOGI(TAG, "ESP_SLEEP_WAKEUP_ULP");
+            ESP_LOGI(TAG, "Wakup caused by ULP program");
             break;
         }
-        case ESP_SLEEP_WAKEUP_UNDEFINED: {
-            ESP_LOGI(TAG, "Wakeup was not caused by deep sleep");
+        case ESP_SLEEP_WAKEUP_GPIO: {
+            ESP_LOGI(TAG, "Wakeup caused by GPIO (light sleep only)");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_UART: {
+            ESP_LOGI(TAG, "Wakeup caused by UART (light sleep only)");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_WIFI: {
+            ESP_LOGI(TAG, "Wakeup caused by WIFI (light sleep only)");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_BT: {
+            ESP_LOGI(TAG, "Wakeup caused by BT (light sleep only)");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_COCPU: {
+            ESP_LOGI(TAG, "Wakeup caused by COCPU int");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_COCPU_TRAP_TRIG: {
+            ESP_LOGI(TAG, "Wakeup caused by COCPU crash");
             break;
         }
         default:
