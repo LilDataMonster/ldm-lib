@@ -35,8 +35,11 @@ public:
     cJSON *buildJson(void);
 
 private:
+    // these need to be duplicated since they're a union
+    wifi_config_t sta_config;
+    wifi_config_t ap_config;
+    
     wifi_init_config_t init_config;
-    wifi_config_t config;
     wifi_ps_type_t power_save_mode;
     static bool connected;
 

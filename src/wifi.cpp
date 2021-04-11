@@ -25,10 +25,13 @@ if(_x != ESP_OK) {\
     cJSON_AddStringToObject(_cjson, _name, #_macro); \
     break;
 
-#define DEFAULT_SSID CONFIG_WIFI_SSID
-#define DEFAULT_PWD CONFIG_WIFI_PASSWORD
+#define DEFAULT_STA_SSID CONFIG_WIFI_STA_SSID
+#define DEFAULT_STA_PWD CONFIG_WIFI_STA_PASSWORD
 
-#define DEFAULT_LISTEN_INTERVAL CONFIG_WIFI_LISTEN_INTERVAL
+#define DEFAULT_AP_SSID CONFIG_WIFI_AP_SSID
+#define DEFAULT_AP_PWD CONFIG_WIFI_AP_PASSWORD
+
+// #define DEFAULT_LISTEN_INTERVAL CONFIG_WIFI_LISTEN_INTERVAL
 
 #if CONFIG_POWER_SAVE_MIN_MODEM
 #define DEFAULT_PS_MODE WIFI_PS_MIN_MODEM
@@ -66,7 +69,8 @@ static int gl_sta_ssid_len;
 bool LDM::WiFi::connected = false;
 LDM::WiFi::WiFi() {
     //
-    this->config = {};
+    this->sta_config = {};
+    this->ap_config = {};
     this->power_save_mode = DEFAULT_PS_MODE;
 }
 
@@ -81,9 +85,14 @@ esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     // create event group
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    // TODO: Add AP mode support
-    this->netif_sta = esp_netif_create_default_wifi_sta();
-    assert(this->netif_sta);
+    if(setup == WiFiSetup::STA || setup == WiFiSetup::APSTA) {
+        this->netif_sta = esp_netif_create_default_wifi_sta();
+        assert(this->netif_sta);
+    }
+    if(setup == WiFiSetup::AP || setup == WiFiSetup::APSTA) {
+        this->netif_ap = esp_netif_create_default_wifi_ap();
+        assert(this->netif_ap);
+    }
 
     // init wifi
     init_config = WIFI_INIT_CONFIG_DEFAULT();
@@ -94,13 +103,33 @@ esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
 
     // setup default ssid/password
-    this->config = {};
-    std::strcpy((char*)this->config.sta.ssid, DEFAULT_SSID);
-    std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
+    std::strcpy((char*)this->sta_config.sta.ssid, DEFAULT_STA_SSID);
+    std::strcpy((char*)this->sta_config.sta.password, DEFAULT_STA_PWD);
+
+    std::strcpy((char*)this->ap_config.sta.ssid, DEFAULT_AP_SSID);
+    std::strcpy((char*)this->ap_config.sta.password, DEFAULT_AP_PWD);
 
     // setup wifi mode
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->config));
+    switch(setup) {
+        case WiFiSetup::STA: {
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->sta_config));
+            break;
+        }
+        case WiFiSetup::AP: {
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &this->ap_config));
+            break;
+        }
+        case WiFiSetup::APSTA: {
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->sta_config));
+            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &this->ap_config));
+            break;
+        }
+    }
+    // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    // ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->config));
 
     // start wifi
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -159,8 +188,15 @@ esp_err_t LDM::WiFi::deinit(void) {
         return err;
     }
 
-    err |= esp_wifi_clear_default_wifi_driver_and_handlers(this->netif_sta);
-    esp_netif_destroy(this->netif_sta);
+    if(this->netif_sta != NULL) {
+        err |= esp_wifi_clear_default_wifi_driver_and_handlers(this->netif_sta);
+        esp_netif_destroy(this->netif_sta);
+    }
+    if(this->netif_ap != NULL) {
+        err |= esp_wifi_clear_default_wifi_driver_and_handlers(this->netif_ap);
+        esp_netif_destroy(this->netif_ap);
+    }
+
     LDM::WiFi::connected = false;
     return err;
 }
