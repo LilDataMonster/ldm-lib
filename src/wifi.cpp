@@ -95,11 +95,14 @@ static int gl_sta_ssid_len;
 bool LDM::WiFi::connected = false;
 bool LDM::WiFi::hosting = false;
 LDM::WiFi::WiFi() {
-    //
-    this->sta_config = {};
-    this->ap_config = {};
+    // initialize defaults
     this->power_save_mode = DEFAULT_PS_MODE;
 
+    this->netif_ap = NULL;
+    this->netif_sta = NULL;
+
+    this->sta_config = {};
+    this->ap_config = {};
 
     // setup default ssid/password for station mode
     std::strcpy((char*)this->sta_config.sta.ssid, DEFAULT_STA_SSID);
@@ -229,19 +232,22 @@ esp_err_t LDM::WiFi::deinit(void) {
         ESP_LOGE(WIFI_TAG, "%s Deinitialize WiFi failed: %s\n", __func__, esp_err_to_name(err));
         return err;
     }
-    err |= esp_netif_deinit();
-    if(err != ESP_OK) {
-        ESP_LOGE(WIFI_TAG, "%s Deinitialize Network Stack failed: %s\n", __func__, esp_err_to_name(err));
-        return err;
-    }
+    // // TODO: API for esp_netif_deinit() not supported yet by esp-idf
+    // err |= esp_netif_deinit();
+    // if(err != ESP_OK) {
+    //     ESP_LOGE(WIFI_TAG, "%s Deinitialize Network Stack failed: %s\n", __func__, esp_err_to_name(err));
+    //     return err;
+    // }
 
     if(this->netif_sta != NULL) {
         err |= esp_wifi_clear_default_wifi_driver_and_handlers(this->netif_sta);
         esp_netif_destroy(this->netif_sta);
+        this->netif_sta = NULL;
     }
     if(this->netif_ap != NULL) {
         err |= esp_wifi_clear_default_wifi_driver_and_handlers(this->netif_ap);
         esp_netif_destroy(this->netif_ap);
+        this->netif_sta = NULL;
     }
 
     LDM::WiFi::connected = false;

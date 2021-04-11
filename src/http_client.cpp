@@ -44,14 +44,19 @@ std::string LDM::HTTP_Client::getURLString(void) {
 }
 
 esp_err_t LDM::HTTP_Client::deinit(void) {
-    esp_err_t err = esp_http_client_close(this->client);
-    if(err != ESP_OK) {
-        ESP_LOGE(HTTP_TAG, "Failed to close HTTP Client: %s", esp_err_to_name(err));
-    }
+    esp_err_t err = ESP_OK;
+    if(this->client != NULL) {
+        err = esp_http_client_close(this->client);
+        if(err != ESP_OK) {
+            ESP_LOGE(HTTP_TAG, "Failed to close HTTP Client: %s", esp_err_to_name(err));
+        }
 
-    err = esp_http_client_cleanup(this->client);
-    if(err != ESP_OK) {
-        ESP_LOGE(HTTP_TAG, "Failed to cleanup HTTP Client: %s", esp_err_to_name(err));
+        err = esp_http_client_cleanup(this->client);
+        if(err != ESP_OK) {
+            ESP_LOGE(HTTP_TAG, "Failed to cleanup HTTP Client: %s", esp_err_to_name(err));
+        }
+
+        this->client = NULL;
     }
 
     return err;
@@ -113,7 +118,7 @@ esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     }
 
     if(message != NULL) {
-        ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
+        // ESP_LOGI(HTTP_TAG, "Sending JSON Message: %s", message);
         esp_http_client_set_method(this->client, HTTP_METHOD_POST);
         esp_http_client_set_header(this->client, "Content-Type", "application/json");
         esp_http_client_set_post_field(this->client, message, strlen(message));
@@ -136,6 +141,7 @@ esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
     if(err != ESP_OK) {
         ESP_LOGE(HTTP_TAG, "Failed to clean up http client: %s", esp_err_to_name(err));
     }
+    this->client = NULL;
 
     return err;
 }
