@@ -136,7 +136,7 @@ esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     if(setup == WiFiSetup::AP || setup == WiFiSetup::APSTA) {
         this->netif_ap = esp_netif_create_default_wifi_ap();
         assert(this->netif_ap);
-        err |= esp_netif_set_hostname(this->netif_ap, DEFAULT_AP_HOSTNAME);
+        ESP_ERROR_CHECK(esp_netif_set_hostname(this->netif_ap, DEFAULT_AP_HOSTNAME));
 
         // set static ap addresses
         esp_netif_ip_info_t ip_info;
