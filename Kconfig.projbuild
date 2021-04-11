@@ -14,14 +14,6 @@ menu "LDM Library"
             help
                 WiFi password (WPA or WPA2) for the network to connect to.
 
-#        config WIFI_LISTEN_INTERVAL
-#            int "WiFi listen interval"
-#            default 3
-#            help
-#                Interval for station to listen to beacon from AP. The unit of listen interval is one beacon interval.
-#                For example, if beacon interval is 100 ms and listen interval is 3, the interval for station to listen
-#                to beacon is 300 ms.
-
     endmenu
 
     menu "WiFi AP Configuration"
@@ -37,6 +29,45 @@ menu "LDM Library"
             default "WIFI_AP_PASSWORD"
             help
                 WiFi password (WPA or WPA2) for the device to host as.
+
+        choice WIFI_AP_AUTH_MODE
+            prompt "WiFi AP Auth Mode"
+            default WIFI_AUTH_WPA_WPA2_PSK
+            help
+                WiFi authmode for the device.
+
+            config WIFI_AUTH_OPEN
+                bool "OPEN"
+            config WIFI_AUTH_WEP
+                bool "WEP"
+            config WIFI_AUTH_WPA_PSK
+                bool "WPA_PSK"
+            config WIFI_AUTH_WPA2_PSK
+                bool "WPA2_PSK"
+            config WIFI_AUTH_WPA_WPA2_PSK
+                bool "WPA_WPA2_PSK"
+            config WIFI_AUTH_WPA2_ENTERPRISE
+                bool "WPA2_ENTERPRISE"
+            config WIFI_AUTH_WPA3_PSK
+                bool "WPA3_PSK"
+            config WIFI_AUTH_WPA2_WPA3_PSK
+                bool "WPA2_WPA3_PSK"
+            config WIFI_AUTH_WAPI_PSK
+                bool "WAPI_PSK"
+        endchoice
+
+        config WIFI_AP_HIDDEN
+            bool "Set Hidden SSID"
+            default "n"
+            help
+                Set the SSID to be hidden.
+
+        config WIFI_AP_MAX_CONNECTIONS
+            int "Max Number of Connections"
+            range 1 10
+            default 4
+            help
+                Set the maximum number of stations allowed to connect (max: 10)
 
     endmenu
 

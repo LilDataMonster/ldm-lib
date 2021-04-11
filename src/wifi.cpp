@@ -30,8 +30,27 @@ if(_x != ESP_OK) {\
 
 #define DEFAULT_AP_SSID CONFIG_WIFI_AP_SSID
 #define DEFAULT_AP_PWD CONFIG_WIFI_AP_PASSWORD
+#define DEFAULT_AP_MAX_CONNECTIONS CONFIG_WIFI_AP_MAX_CONNECTIONS
 
-// #define DEFAULT_LISTEN_INTERVAL CONFIG_WIFI_LISTEN_INTERVAL
+#if CONFIG_WIFI_AUTH_WEP
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WEP
+#elif CONFIG_WIFI_AUTH_WPA_PSK
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WPA_PSK
+#elif CONFIG_WIFI_AUTH_WPA2_PSK
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WPA2_PSK
+#elif CONFIG_WIFI_AUTH_WPA_WPA2_PSK
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WPA_WPA2_PSK
+#elif CONFIG_WIFI_AUTH_WPA2_ENTERPRISE
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WPA2_ENTERPRISE
+#elif CONFIG_WIFI_AUTH_WPA3_PSK
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WPA3_PSK
+#elif CONFIG_WIFI_AUTH_WPA2_WPA3_PSK
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WPA2_WPA3_PSK
+#elif CONFIG_WIFI_AUTH_WAPI_PSK
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WAPI_PSK
+#else
+#define DEFAULT_AP_AUTH_MODE WIFI_AUTH_OPEN
+#endif
 
 #if CONFIG_POWER_SAVE_MIN_MODEM
 #define DEFAULT_PS_MODE WIFI_PS_MIN_MODEM
@@ -72,6 +91,20 @@ LDM::WiFi::WiFi() {
     this->sta_config = {};
     this->ap_config = {};
     this->power_save_mode = DEFAULT_PS_MODE;
+
+
+    // setup default ssid/password for station mode
+    std::strcpy((char*)this->sta_config.sta.ssid, DEFAULT_STA_SSID);
+    std::strcpy((char*)this->sta_config.sta.password, DEFAULT_STA_PWD);
+
+    // setup default ssid/password for ap mode
+    std::strcpy((char*)this->ap_config.ap.ssid, DEFAULT_AP_SSID);
+    std::strcpy((char*)this->ap_config.ap.password, DEFAULT_AP_PWD);
+    this->ap_config.ap.authmode = DEFAULT_AP_AUTH_MODE;
+    this->ap_config.ap.max_connection = DEFAULT_AP_MAX_CONNECTIONS;
+#ifdef CONFIG_WIFI_AP_HIDDEN
+    this->ap_config.ap.ssid_hidden = 1;
+#endif
 }
 
 esp_err_t LDM::WiFi::init(WiFiSetup setup) {
@@ -101,13 +134,6 @@ esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     // add event handlers
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL));
-
-    // setup default ssid/password
-    std::strcpy((char*)this->sta_config.sta.ssid, DEFAULT_STA_SSID);
-    std::strcpy((char*)this->sta_config.sta.password, DEFAULT_STA_PWD);
-
-    std::strcpy((char*)this->ap_config.sta.ssid, DEFAULT_AP_SSID);
-    std::strcpy((char*)this->ap_config.sta.password, DEFAULT_AP_PWD);
 
     // setup wifi mode
     switch(setup) {
