@@ -11,11 +11,16 @@ extern "C" {
 namespace LDM {
 class WiFi {
 public:
+    enum WiFiSetup : uint8_t {
+        AP,
+        STA,
+        APSTA
+    };
+
     WiFi();
 
     // initialize connection
-    esp_err_t init(void);
-    esp_err_t init(wifi_config_t *config);
+    esp_err_t init(WiFiSetup setup=WiFiSetup::STA);
     esp_err_t deinit(void);
     esp_err_t connect(void);
     esp_err_t disconnect(void);
@@ -35,7 +40,8 @@ private:
     wifi_ps_type_t power_save_mode;
     static bool connected;
 
-    esp_netif_t *netif;
+    esp_netif_t *netif_sta;
+    esp_netif_t *netif_ap;
     static esp_ip4_addr_t ipv4_address;
     static esp_ip4_addr_t netmask;
     static esp_ip4_addr_t gateway;

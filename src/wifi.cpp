@@ -70,7 +70,7 @@ LDM::WiFi::WiFi() {
     this->power_save_mode = DEFAULT_PS_MODE;
 }
 
-esp_err_t LDM::WiFi::init(wifi_config_t *config) {
+esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     esp_err_t err = ESP_OK;
 
     // s_wifi_event_group = xEventGroupCreate();
@@ -82,8 +82,8 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // TODO: Add AP mode support
-    this->netif = esp_netif_create_default_wifi_sta();
-    assert(this->netif);
+    this->netif_sta = esp_netif_create_default_wifi_sta();
+    assert(this->netif_sta);
 
     // init wifi
     init_config = WIFI_INIT_CONFIG_DEFAULT();
@@ -95,14 +95,8 @@ esp_err_t LDM::WiFi::init(wifi_config_t *config) {
 
     // setup default ssid/password
     this->config = {};
-    if(config != NULL) {
-        // std::memcpy(&this->config, config, sizeof(*config));
-        std::strcpy((char*)this->config.sta.ssid, (char*)config->sta.ssid);
-        std::strcpy((char*)this->config.sta.password, (char*)config->sta.password);
-    } else {
-        std::strcpy((char*)this->config.sta.ssid, DEFAULT_SSID);
-        std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
-    }
+    std::strcpy((char*)this->config.sta.ssid, DEFAULT_SSID);
+    std::strcpy((char*)this->config.sta.password, DEFAULT_PWD);
 
     // setup wifi mode
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -164,8 +158,9 @@ esp_err_t LDM::WiFi::deinit(void) {
         ESP_LOGE(WIFI_TAG, "%s Deinitialize Network Stack failed: %s\n", __func__, esp_err_to_name(err));
         return err;
     }
-    // err |= esp_netif_destroy(this->netif);
-    esp_netif_destroy(this->netif);
+
+    err |= esp_wifi_clear_default_wifi_driver_and_handlers(this->netif_sta);
+    esp_netif_destroy(this->netif_sta);
     LDM::WiFi::connected = false;
     return err;
 }
@@ -604,7 +599,7 @@ cJSON * LDM::WiFi::buildJson(void) {
         cJSON_AddItemToObject(json_root, "connected_ap", json_wifi_ip);
     }
     // esp_netif_ip_info_t *ip_info = NULL;
-    // err = esp_netif_get_ip_info(this->netif, ip_info);
+    // err = esp_netif_get_ip_info(this->netif_sta, ip_info);
     // if(err != ESP_OK) {
     //     ESP_LOGE(WIFI_TAG, "%s IP Fetch failed: %s\n", __func__, esp_err_to_name(err));
     //     cJSON_AddStringToObject(json_root, "ip_address", "NONE");

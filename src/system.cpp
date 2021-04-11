@@ -18,22 +18,22 @@ LDM::System::System(uint8_t *custom_mac_address) {
     if(custom_mac_address != NULL) {
         memcpy(this->base_mac_address, custom_mac_address, 6);
     } else  {
-        // read custom mac address from BLK3
-        esp_err_t ret = esp_efuse_mac_get_custom(this->base_mac_address);
-        if(ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to get MAC Address from EFUSE BLK3. (%s)", esp_err_to_name(ret));
-            ESP_LOGI(TAG, "Defaulting to base MAC Address in BLK0 of EFUSE");
-
-            // read default mac address from BLK0
-            ret = esp_efuse_mac_get_default(this->base_mac_address);
+        // // read custom mac address from BLK3
+        // esp_err_t ret = esp_efuse_mac_get_custom(this->base_mac_address);
+        // if(ret != ESP_OK) {
+        //     ESP_LOGE(TAG, "Failed to get MAC Address from EFUSE BLK3. (%s)", esp_err_to_name(ret));
+        //     ESP_LOGI(TAG, "Defaulting to base MAC Address in BLK0 of EFUSE");
+        //
+        //     // read default mac address from BLK0
+            esp_err_t ret = esp_efuse_mac_get_default(this->base_mac_address);
             if (ret != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to get base MAC Address from EFUSE BLK0. (%s)", esp_err_to_name(ret));
             } else {
                 ESP_LOGI(TAG, "Base MAC Address read from EFUSE BLK0");
             }
-        } else {
-            ESP_LOGI(TAG, "Base MAC Address read from EFUSE BLK3");
-        }
+        // } else {
+        //     ESP_LOGI(TAG, "Base MAC Address read from EFUSE BLK3");
+        // }
     }
 
     // set mac address

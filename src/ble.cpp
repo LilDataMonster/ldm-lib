@@ -33,7 +33,7 @@ LDM::BLE::BLE(char* device_name) : Bluetooth(device_name) {
 }
 
 LDM::BLE::~BLE(){
-  
+
 }
 
 esp_err_t LDM::BLE::init(void) {
@@ -109,7 +109,7 @@ esp_err_t LDM::BLE::initBlufi(void) {
     esp_err_t err = esp_blufi_profile_init();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
-    err |= LDM::BLE::wifi.init(NULL);
+    err |= LDM::BLE::wifi.init(LDM::WiFi::WiFiSetup::STA);
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
     ESP_LOGI(TAG, "BluFi Initialized");
@@ -120,7 +120,8 @@ esp_err_t LDM::BLE::initBlufi(wifi_config_t *wifi_config) {
     esp_err_t err = esp_blufi_profile_init();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
-    err |= LDM::BLE::wifi.init(wifi_config);
+    err |= LDM::BLE::wifi.init(LDM::WiFi::WiFiSetup::STA);
+    LDM::BLE::wifi.setConfig(WIFI_IF_STA, wifi_config);
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
     ESP_LOGI(TAG, "BluFi Initialized");
