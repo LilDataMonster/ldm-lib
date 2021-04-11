@@ -30,7 +30,8 @@ public:
 
     esp_err_t setWiFiMode(wifi_mode_t mode);
     esp_err_t getWiFiMode(wifi_mode_t *mode);
-    static bool isConnected(void);
+    static bool isConnected(void);    // sta mode
+    static bool isHosting(void);      // ap mode
 
     cJSON *buildJson(void);
 
@@ -38,10 +39,11 @@ private:
     // these need to be duplicated since they're a union
     wifi_config_t sta_config;
     wifi_config_t ap_config;
-    
+
     wifi_init_config_t init_config;
     wifi_ps_type_t power_save_mode;
     static bool connected;
+    static bool hosting;
 
     esp_netif_t *netif_sta;
     esp_netif_t *netif_ap;

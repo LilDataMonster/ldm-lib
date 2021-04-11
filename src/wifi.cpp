@@ -7,6 +7,7 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_system.h>
+#include <esp_netif.h>
 #include <esp_wifi.h>
 #include <esp_err.h>
 
@@ -27,10 +28,16 @@ if(_x != ESP_OK) {\
 
 #define DEFAULT_STA_SSID CONFIG_WIFI_STA_SSID
 #define DEFAULT_STA_PWD CONFIG_WIFI_STA_PASSWORD
+#define DEFAULT_STA_HOSTNAME CONFIG_WIFI_STA_HOSTNAME
 
 #define DEFAULT_AP_SSID CONFIG_WIFI_AP_SSID
 #define DEFAULT_AP_PWD CONFIG_WIFI_AP_PASSWORD
 #define DEFAULT_AP_MAX_CONNECTIONS CONFIG_WIFI_AP_MAX_CONNECTIONS
+#define DEFAULT_AP_CHANNEL CONFIG_WIFI_AP_CHANNEL
+#define DEFAULT_AP_HOSTNAME CONFIG_WIFI_AP_HOSTNAME
+#define DEFAULT_AP_IP CONFIG_WIFI_AP_IPV4
+#define DEFAULT_AP_GATEWAY CONFIG_WIFI_AP_GATEWAY
+#define DEFAULT_AP_NETMASK CONFIG_WIFI_AP_NETMASK
 
 #if CONFIG_WIFI_AUTH_WEP
 #define DEFAULT_AP_AUTH_MODE WIFI_AUTH_WEP
@@ -86,6 +93,7 @@ static uint8_t gl_sta_ssid[32];
 static int gl_sta_ssid_len;
 
 bool LDM::WiFi::connected = false;
+bool LDM::WiFi::hosting = false;
 LDM::WiFi::WiFi() {
     //
     this->sta_config = {};
@@ -100,8 +108,10 @@ LDM::WiFi::WiFi() {
     // setup default ssid/password for ap mode
     std::strcpy((char*)this->ap_config.ap.ssid, DEFAULT_AP_SSID);
     std::strcpy((char*)this->ap_config.ap.password, DEFAULT_AP_PWD);
+    this->ap_config.ap.ssid_len = std::strlen(DEFAULT_AP_SSID);
     this->ap_config.ap.authmode = DEFAULT_AP_AUTH_MODE;
     this->ap_config.ap.max_connection = DEFAULT_AP_MAX_CONNECTIONS;
+    this->ap_config.ap.channel = DEFAULT_AP_CHANNEL;
 #ifdef CONFIG_WIFI_AP_HIDDEN
     this->ap_config.ap.ssid_hidden = 1;
 #endif
@@ -121,10 +131,21 @@ esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     if(setup == WiFiSetup::STA || setup == WiFiSetup::APSTA) {
         this->netif_sta = esp_netif_create_default_wifi_sta();
         assert(this->netif_sta);
+        err |= esp_netif_set_hostname(this->netif_sta, DEFAULT_STA_HOSTNAME);
     }
     if(setup == WiFiSetup::AP || setup == WiFiSetup::APSTA) {
         this->netif_ap = esp_netif_create_default_wifi_ap();
         assert(this->netif_ap);
+        err |= esp_netif_set_hostname(this->netif_ap, DEFAULT_AP_HOSTNAME);
+
+        // set static ap addresses
+        esp_netif_ip_info_t ip_info;
+        esp_netif_str_to_ip4(DEFAULT_AP_IP, &ip_info.ip);
+        esp_netif_str_to_ip4(DEFAULT_AP_GATEWAY, &ip_info.gw);
+        esp_netif_str_to_ip4((char*)DEFAULT_AP_NETMASK, &ip_info.netmask);
+
+        ESP_ERROR_CHECK(esp_netif_dhcps_stop(this->netif_ap)); // shutdown dhcp server (TODO: restart this?)
+        ESP_ERROR_CHECK(esp_netif_set_ip_info(this->netif_ap, &ip_info));
     }
 
     // init wifi
@@ -139,18 +160,18 @@ esp_err_t LDM::WiFi::init(WiFiSetup setup) {
     switch(setup) {
         case WiFiSetup::STA: {
             ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->sta_config));
+            ESP_ERROR_CHECK(esp_wifi_set_config((wifi_interface_t)ESP_IF_WIFI_STA, &this->sta_config));
             break;
         }
         case WiFiSetup::AP: {
             ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &this->ap_config));
+            ESP_ERROR_CHECK(esp_wifi_set_config((wifi_interface_t)ESP_IF_WIFI_AP, &this->ap_config));
             break;
         }
         case WiFiSetup::APSTA: {
             ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
-            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &this->sta_config));
-            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &this->ap_config));
+            ESP_ERROR_CHECK(esp_wifi_set_config((wifi_interface_t)ESP_IF_WIFI_STA, &this->sta_config));
+            ESP_ERROR_CHECK(esp_wifi_set_config((wifi_interface_t)ESP_IF_WIFI_AP, &this->ap_config));
             break;
         }
     }
@@ -262,21 +283,23 @@ esp_err_t LDM::WiFi::getConfig(wifi_interface_t interface, wifi_config_t *config
 }
 
 void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-    wifi_event_sta_connected_t *event;
-    // wifi_mode_t mode;
 
     switch(event_id) {
     case WIFI_EVENT_STA_START:
         esp_wifi_connect();
         break;
-    case WIFI_EVENT_STA_CONNECTED:
+    case WIFI_EVENT_STA_STOP:
+        LDM::WiFi::connected = false;
+        break;
+    case WIFI_EVENT_STA_CONNECTED: {
         gl_sta_connected = true;
-        event = (wifi_event_sta_connected_t*) event_data;
+        wifi_event_sta_connected_t* event = (wifi_event_sta_connected_t*) event_data;
         std::memcpy(gl_sta_bssid, event->bssid, 6);
         std::memcpy(gl_sta_ssid, event->ssid, event->ssid_len);
         gl_sta_ssid_len = event->ssid_len;
         break;
-    case WIFI_EVENT_STA_DISCONNECTED:
+    }
+    case WIFI_EVENT_STA_DISCONNECTED: {
         /* This is a workaround as ESP32 WiFi libs don't currently
         auto-reassociate. */
         gl_sta_connected = false;
@@ -286,6 +309,24 @@ void LDM::WiFi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32
         esp_wifi_connect();
         // xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
         break;
+    }
+    case WIFI_EVENT_AP_START:
+        LDM::WiFi::hosting = true;
+        break;
+    case WIFI_EVENT_AP_STOP:
+        LDM::WiFi::hosting = false;
+        break;
+    case WIFI_EVENT_AP_STACONNECTED: {
+        wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+        ESP_LOGI(WIFI_TAG, "station " MACSTR " join, AID=%d", MAC2STR(event->mac), event->aid);
+        break;
+    }
+    case WIFI_EVENT_AP_STADISCONNECTED: {
+        wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
+        ESP_LOGI(WIFI_TAG, "station " MACSTR " leave, AID=%d", MAC2STR(event->mac), event->aid);
+        break;
+    }
+
     // case WIFI_EVENT_AP_START:
     //     esp_wifi_get_mode(&mode);
     //
@@ -430,6 +471,10 @@ bool LDM::WiFi::isConnected(void) {
     return LDM::WiFi::connected;
 }
 
+bool LDM::WiFi::isHosting(void) {
+    return LDM::WiFi::hosting;
+}
+
 esp_err_t LDM::WiFi::getIpv4(uint8_t* ipv4) {
     if(isConnected()) {
         ipv4[0] = esp_ip4_addr_get_byte(&LDM::WiFi::ipv4_address, 0);
@@ -502,6 +547,7 @@ cJSON * LDM::WiFi::buildJson(void) {
             CASE_STRING_MACRO(json_wifi_ap_config, "authmode", WIFI_AUTH_WPA2_ENTERPRISE)
             CASE_STRING_MACRO(json_wifi_ap_config, "authmode", WIFI_AUTH_WPA3_PSK)
             CASE_STRING_MACRO(json_wifi_ap_config, "authmode", WIFI_AUTH_WPA2_WPA3_PSK)
+            CASE_STRING_MACRO(json_wifi_ap_config, "authmode", WIFI_AUTH_WAPI_PSK)
             CASE_STRING_MACRO(json_wifi_ap_config, "authmode", WIFI_AUTH_MAX)
         }
         cJSON_AddNumberToObject(json_wifi_ap_config, "channel", config.ap.channel);
@@ -595,6 +641,7 @@ cJSON * LDM::WiFi::buildJson(void) {
             CASE_STRING_MACRO(json_wifi_ap_info, "authmode", WIFI_AUTH_WPA2_ENTERPRISE)
             CASE_STRING_MACRO(json_wifi_ap_info, "authmode", WIFI_AUTH_WPA3_PSK)
             CASE_STRING_MACRO(json_wifi_ap_info, "authmode", WIFI_AUTH_WPA2_WPA3_PSK)
+            CASE_STRING_MACRO(json_wifi_ap_info, "authmode", WIFI_AUTH_WAPI_PSK)
             CASE_STRING_MACRO(json_wifi_ap_info, "authmode", WIFI_AUTH_MAX)
         }
         switch(ap_info.pairwise_cipher) {
@@ -605,6 +652,7 @@ cJSON * LDM::WiFi::buildJson(void) {
             CASE_STRING_MACRO(json_wifi_ap_info, "pairwise_cipher", WIFI_CIPHER_TYPE_CCMP)
             CASE_STRING_MACRO(json_wifi_ap_info, "pairwise_cipher", WIFI_CIPHER_TYPE_TKIP_CCMP)
             CASE_STRING_MACRO(json_wifi_ap_info, "pairwise_cipher", WIFI_CIPHER_TYPE_AES_CMAC128)
+            CASE_STRING_MACRO(json_wifi_ap_info, "pairwise_cipher", WIFI_CIPHER_TYPE_SMS4)
             CASE_STRING_MACRO(json_wifi_ap_info, "pairwise_cipher", WIFI_CIPHER_TYPE_UNKNOWN)
         }
         switch(ap_info.group_cipher) {
@@ -615,6 +663,7 @@ cJSON * LDM::WiFi::buildJson(void) {
             CASE_STRING_MACRO(json_wifi_ap_info, "group_cipher", WIFI_CIPHER_TYPE_CCMP)
             CASE_STRING_MACRO(json_wifi_ap_info, "group_cipher", WIFI_CIPHER_TYPE_TKIP_CCMP)
             CASE_STRING_MACRO(json_wifi_ap_info, "group_cipher", WIFI_CIPHER_TYPE_AES_CMAC128)
+            CASE_STRING_MACRO(json_wifi_ap_info, "group_cipher", WIFI_CIPHER_TYPE_SMS4)
             CASE_STRING_MACRO(json_wifi_ap_info, "group_cipher", WIFI_CIPHER_TYPE_UNKNOWN)
         }
         switch(ap_info.ant) {

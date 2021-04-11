@@ -14,6 +14,12 @@ menu "LDM Library"
             help
                 WiFi password (WPA or WPA2) for the network to connect to.
 
+        config WIFI_STA_HOSTNAME
+            string "STA Hostname"
+            default "lildatamonster"
+            help
+                Set the hostname for the STA.
+
     endmenu
 
     menu "WiFi AP Configuration"
@@ -58,7 +64,7 @@ menu "LDM Library"
 
         config WIFI_AP_HIDDEN
             bool "Set Hidden SSID"
-            default "n"
+            default n
             help
                 Set the SSID to be hidden.
 
@@ -67,7 +73,38 @@ menu "LDM Library"
             range 1 10
             default 4
             help
-                Set the maximum number of stations allowed to connect (max: 10)
+                Set the maximum number of stations allowed to connect (max: 10).
+
+        config WIFI_AP_CHANNEL
+            int "WiFi AP 2.4GHz Channel"
+            range 1 13
+            default 8
+            help
+                Set the channel for the AP.
+
+        config WIFI_AP_HOSTNAME
+            string "AP Hostname"
+            default "lildatamonster"
+            help
+                Set the hostname for the AP.
+
+        config WIFI_AP_IPV4
+            string "Static AP IPv4 Address"
+            default "192.168.0.2"
+            help
+                Set a static IPv4 Address for the AP.
+
+        config WIFI_AP_GATEWAY
+            string "Static AP Gateway Address"
+            default "192.168.0.1"
+            help
+                Set a static Gateway for the AP.
+
+        config WIFI_AP_NETMASK
+            string "Static AP Netmask"
+            default "255.255.0.0"
+            help
+                Set a static Netmask for the AP.
 
     endmenu
 
