@@ -13,7 +13,7 @@ class BLE : public Bluetooth {
 public:
     BLE(char* device_name);
     ~BLE();
-    
+
     esp_err_t init(void);
     esp_err_t deinit(void);
 
@@ -36,11 +36,12 @@ public:
     uint16_t getBlufiVersion(void);
     static void defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
     static void defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_param_t *param);
+    esp_err_t setupDefaultBleGapCallback(void);
     esp_err_t setupDefaultBlufiCallback(void);
     bool isConnected(void);
 
-    static esp_ble_adv_data_t default_blufi_adv_data;
-    static esp_ble_adv_params_t default_blufi_adv_params;
+    static esp_ble_adv_data_t default_ble_adv_data;
+    static esp_ble_adv_params_t default_ble_adv_params;
     LDM::WiFi wifi;
 
 private:

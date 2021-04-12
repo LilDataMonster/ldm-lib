@@ -109,6 +109,8 @@ esp_err_t LDM::BLE::initBlufi(void) {
     esp_err_t err = esp_blufi_profile_init();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
+    // TODO: Add check to make sure wifi power save is not WIFI_PS_NONE in WiFi/BT coexist mode.
+    // https://github.com/espressif/esp-idf/issues/5759
     err |= LDM::BLE::wifi.init(LDM::WiFi::WiFiSetup::STA);
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
@@ -120,6 +122,8 @@ esp_err_t LDM::BLE::initBlufi(wifi_config_t *wifi_config) {
     esp_err_t err = esp_blufi_profile_init();
     ERR_CHECK(err, "Error BLE BluFi initialization failed");
 
+    // TODO: Add check to make sure wifi power save is not WIFI_PS_NONE in WiFi/BT coexist mode.
+    // https://github.com/espressif/esp-idf/issues/5759
     err |= LDM::BLE::wifi.init(LDM::WiFi::WiFiSetup::STA);
     LDM::BLE::wifi.setConfig(WIFI_IF_STA, wifi_config);
     ERR_CHECK(err, "Error BLE BluFi initialization failed");

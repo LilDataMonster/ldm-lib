@@ -30,42 +30,11 @@ bool LDM::BLE::ble_is_connected;
 uint8_t LDM::BLE::gl_sta_bssid[6];
 uint8_t LDM::BLE::gl_sta_ssid[32];
 int LDM::BLE::gl_sta_ssid_len;
-esp_ble_adv_data_t LDM::BLE::default_blufi_adv_data;
-esp_ble_adv_params_t LDM::BLE::default_blufi_adv_params;
+esp_ble_adv_data_t LDM::BLE::default_ble_adv_data;
+esp_ble_adv_params_t LDM::BLE::default_ble_adv_params;
 
 
 esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
-    LDM::BLE::gl_sta_connected = false;
-    LDM::BLE::connected = false;
-
-    uint8_t default_service_uuid128[32] = {
-        /* LSB <--------------------------------------------------------------------------------> MSB */
-        //first uuid, 16bit, [12],[13] is the value
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
-    };
-
-    LDM::BLE::default_blufi_adv_data.set_scan_rsp = false;
-    LDM::BLE::default_blufi_adv_data.include_name = true;
-    LDM::BLE::default_blufi_adv_data.include_txpower = true;
-    LDM::BLE::default_blufi_adv_data.min_interval = 0x0006; //slave connection min interval, Time = min_interval * 1.25 msec
-    LDM::BLE::default_blufi_adv_data.max_interval = 0x0010; //slave connection max interval, Time = max_interval * 1.25 msec
-    LDM::BLE::default_blufi_adv_data.appearance = 0x00;
-    LDM::BLE::default_blufi_adv_data.manufacturer_len = 0;
-    LDM::BLE::default_blufi_adv_data.p_manufacturer_data =  NULL;
-    LDM::BLE::default_blufi_adv_data.service_data_len = 0;
-    LDM::BLE::default_blufi_adv_data.p_service_data = NULL;
-    LDM::BLE::default_blufi_adv_data.service_uuid_len = 16;
-    LDM::BLE::default_blufi_adv_data.p_service_uuid = default_service_uuid128;
-    LDM::BLE::default_blufi_adv_data.flag = 0x6;
-
-    LDM::BLE::default_blufi_adv_params.adv_int_min        = 0x100;
-    LDM::BLE::default_blufi_adv_params.adv_int_max        = 0x100;
-    LDM::BLE::default_blufi_adv_params.adv_type           = ADV_TYPE_IND;
-    LDM::BLE::default_blufi_adv_params.own_addr_type      = BLE_ADDR_TYPE_PUBLIC;
-    // LDM::BLE::default_blufi_adv_params.peer_addr            =
-    // LDM::BLE::default_blufi_adv_params.peer_addr_type       =
-    LDM::BLE::default_blufi_adv_params.channel_map        = ADV_CHNL_ALL;
-    LDM::BLE::default_blufi_adv_params.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
 
     esp_blufi_callbacks_t blufi_callbacks;
     blufi_callbacks.event_cb = LDM::BLE::defaultBlufiCallback;
@@ -76,11 +45,48 @@ esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
     //     // .decrypt_func = blufi_aes_decrypt,
     //     // .checksum_func = blufi_crc_checksum,
     // }
+    esp_err_t err = this->registerBlufiCallback(&blufi_callbacks);
+    ERR_CHECK(err, "Error BLE BluFi default callback failed");
+    return err;
+}
+
+esp_err_t LDM::BLE::setupDefaultBleGapCallback(void) {
+    LDM::BLE::gl_sta_connected = false;
+    LDM::BLE::connected = false;
+
+    uint8_t default_service_uuid128[32] = {
+        /* LSB <--------------------------------------------------------------------------------> MSB */
+        //first uuid, 16bit, [12],[13] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
+    };
+
+    LDM::BLE::default_ble_adv_data.set_scan_rsp = false;
+    LDM::BLE::default_ble_adv_data.include_name = true;
+    LDM::BLE::default_ble_adv_data.include_txpower = true;
+    LDM::BLE::default_ble_adv_data.min_interval = 0x0006; //slave connection min interval, Time = min_interval * 1.25 msec
+    LDM::BLE::default_ble_adv_data.max_interval = 0x0010; //slave connection max interval, Time = max_interval * 1.25 msec
+    LDM::BLE::default_ble_adv_data.appearance = 0x00;
+    LDM::BLE::default_ble_adv_data.manufacturer_len = 0;
+    LDM::BLE::default_ble_adv_data.p_manufacturer_data =  NULL;
+    LDM::BLE::default_ble_adv_data.service_data_len = 0;
+    LDM::BLE::default_ble_adv_data.p_service_data = NULL;
+    LDM::BLE::default_ble_adv_data.service_uuid_len = 16;
+    LDM::BLE::default_ble_adv_data.p_service_uuid = default_service_uuid128;
+    LDM::BLE::default_ble_adv_data.flag = 0x6;
+    esp_ble_gap_config_adv_data(&LDM::BLE::default_ble_adv_data);
+
+    LDM::BLE::default_ble_adv_params.adv_int_min        = 0x100;
+    LDM::BLE::default_ble_adv_params.adv_int_max        = 0x100;
+    LDM::BLE::default_ble_adv_params.adv_type           = ADV_TYPE_IND;
+    LDM::BLE::default_ble_adv_params.own_addr_type      = BLE_ADDR_TYPE_PUBLIC;
+    // LDM::BLE::default_ble_adv_params.peer_addr            =
+    // LDM::BLE::default_ble_adv_params.peer_addr_type       =
+    LDM::BLE::default_ble_adv_params.channel_map        = ADV_CHNL_ALL;
+    LDM::BLE::default_ble_adv_params.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
+    esp_ble_gap_start_advertising(&LDM::BLE::default_ble_adv_params);
 
     ESP_LOGI(TAG, "Initializing Default GAP Callback");
     esp_err_t err = this->registerGapCallback(LDM::BLE::defaultGapHandler);
-    err |= this->registerBlufiCallback(&blufi_callbacks);
-    ERR_CHECK(err, "Error BLE BluFi default callback failed");
 
     return err;
 }
@@ -88,7 +94,6 @@ esp_err_t LDM::BLE::setupDefaultBlufiCallback(void) {
 void LDM::BLE::defaultGapHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     switch (event) {
     case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-        esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
         ESP_LOGI(TAG, "Started GAP Advertising");
         break;
     case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
@@ -126,7 +131,6 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
     switch (event) {
     case ESP_BLUFI_EVENT_INIT_FINISH:
         ESP_LOGI(TAG, "BluFi init finish");
-        esp_ble_gap_config_adv_data(&LDM::BLE::default_blufi_adv_data);
         break;
     case ESP_BLUFI_EVENT_DEINIT_FINISH:
         ESP_LOGI(TAG, "BluFi deinit finish");
@@ -143,7 +147,7 @@ void LDM::BLE::defaultBlufiCallback(esp_blufi_cb_event_t event, esp_blufi_cb_par
         ESP_LOGI(TAG, "BluFi ble disconnect");
         // LDM::BLE::connected = false;
         // blufi_security_deinit();
-        esp_ble_gap_start_advertising(&LDM::BLE::default_blufi_adv_params);
+        esp_ble_gap_start_advertising(&LDM::BLE::default_ble_adv_params);
         break;
     case ESP_BLUFI_EVENT_SET_WIFI_OPMODE:
         ESP_LOGI(TAG, "BluFi Set WIFI opmode %d", param->wifi_mode.op_mode);
