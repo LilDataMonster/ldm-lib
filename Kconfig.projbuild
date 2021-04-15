@@ -1,5 +1,21 @@
 menu "LDM Library"
 
+    menu "mDNS Configuration"
+
+        config MDNS_HOSTNAME
+            string "LilDataMonster"
+            default "LilDataMonster"
+            help
+                mDNS Hostname accessible via MDNS_HOSTNAME.local
+
+        config MDNS_INSTANCE
+            string "LilDataMonster"
+            default "LilDataMonster"
+            help
+                mDNS Instance Name
+
+    endmenu
+
     menu "WiFi STA Configuration"
 
         config WIFI_STA_SSID

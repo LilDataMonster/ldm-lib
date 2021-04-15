@@ -17,5 +17,6 @@ idf_component_register(
              esp_https_ota
              #esp_https_server
              driver
+             mdns
     EMBED_TXTFILES ${cert_pem}
 )
