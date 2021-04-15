@@ -250,6 +250,9 @@ esp_err_t LDM::WiFi::deinit(void) {
         this->netif_sta = NULL;
     }
 
+    // delete event group
+    ESP_ERROR_CHECK(esp_event_loop_delete_default());
+
     LDM::WiFi::connected = false;
     return err;
 }
