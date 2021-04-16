@@ -27,11 +27,15 @@ LDM::Bluetooth::Bluetooth(char* device_name) {
 
     // setup default bluetooth configuration
     this->config = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+
+    this->bluedroid_initialized = false;
+    this->controller_initialized = false;
 }
 
 LDM::Bluetooth::~Bluetooth() {
     //
     // this->deinit();
+    this->release();
 }
 
 esp_err_t LDM::Bluetooth::init(esp_bt_mode_t bt_mode) {
@@ -60,7 +64,6 @@ esp_err_t LDM::Bluetooth::deinit(void) {
     ERR_CHECK(err, "Deinit bluetooth failed");
 
     ESP_LOGI(TAG, "Bluetooth Deinitialized");
-    this->controller_initialized = false;
     return err;
 }
 
@@ -92,6 +95,7 @@ esp_err_t LDM::Bluetooth::initializeBluedroid(void) {
     ERR_CHECK(err, "Enable bluedroid failed");
     ESP_LOGI(TAG, "Bluedroid Enabled");
 
+    this->bluedroid_initialized = true;
     return err;
 }
 
@@ -106,10 +110,7 @@ esp_err_t LDM::Bluetooth::deinitializeController(void) {
     ERR_CHECK(err, "Deinit bluetooth controller failed");
     ESP_LOGI(TAG, "Bluetooth Controller Deinitialized");
 
-    // free bluetooth stack memory
-    err |= esp_bt_mem_release(this->bt_mode);
-    ERR_CHECK(err, "Deinit bluetooth controller failed");
-
+    this->controller_initialized = false;
     return err;
 }
 
@@ -124,6 +125,19 @@ esp_err_t LDM::Bluetooth::deinitializeBluedroid(void) {
     ERR_CHECK(err, "Deinit bluedroid failed");
     ESP_LOGI(TAG, "Bluedroid Deinitialized");
 
+    this->bluedroid_initialized = false;
+    return err;
+}
+
+bool LDM::Bluetooth::isInitialized(void) {
+    return this->bluedroid_initialized && this->controller_initialized;
+};
+
+esp_err_t LDM::Bluetooth::release(void) {
+    // free bluetooth stack memory
+    esp_err_t err = esp_bt_mem_release(this->bt_mode);
+    // err |= esp_bt_controller_mem_release(this->bt_mode);
+    ERR_CHECK(err, "Deinit bluetooth controller failed");
     return err;
 }
 

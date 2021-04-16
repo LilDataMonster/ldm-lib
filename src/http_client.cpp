@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <string>
-#include <exception>
 
 #include <esp_log.h>
 #include <esp_event.h>
@@ -83,25 +82,19 @@ esp_err_t LDM::HTTP_Client::postJSON(cJSON *message, size_t size) {
     if(message != NULL) {
 
         char *post_data = NULL;
-
-        try {
-            if(size == 0) {
-                post_data = cJSON_Print(message);
-            } else {
-                post_data = cJSON_PrintBuffered(message, size, 1);
-                // post_data = (char*)malloc(sizeof(char)*size);
-                // cJSON_PrintPreallocated(message, post_data, size, 1);
-            }
-
-            // post data
-            this->postFormattedJSON(post_data);
-
-            // free memory
-            cJSON_free((void*)post_data);
+        if(size == 0) {
+            post_data = cJSON_Print(message);
+        } else {
+            post_data = cJSON_PrintBuffered(message, size, 1);
+            // post_data = (char*)malloc(sizeof(char)*size);
+            // cJSON_PrintPreallocated(message, post_data, size, 1);
         }
-        catch(std::exception& e) {
-            ESP_LOGE(HTTP_TAG, "Error posting JSON message: %s", e.what());
-        }
+
+        // post data
+        this->postFormattedJSON(post_data);
+
+        // free memory
+        cJSON_free((void*)post_data);
         post_data = NULL;
     } else {
         ESP_LOGE(HTTP_TAG, "JSON Message is NULL");

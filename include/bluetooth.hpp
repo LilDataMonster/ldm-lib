@@ -11,6 +11,8 @@ public:
 
     esp_err_t init(esp_bt_mode_t bt_mode=ESP_BT_MODE_BLE);
     esp_err_t deinit(void);
+    esp_err_t release(void);
+    bool isInitialized(void);
 
     esp_bt_controller_status_t getStatus(void);
     esp_power_level_t getTxPowerLevel(esp_ble_power_type_t power_type);
@@ -39,6 +41,7 @@ private:
     esp_bt_mode_t bt_mode;
 
     bool controller_initialized;
+    bool bluedroid_initialized;
     char* device_name;
 };
 }
