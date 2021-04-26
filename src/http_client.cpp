@@ -83,7 +83,7 @@ esp_err_t LDM::HTTP_Client::postJSON(cJSON *message, size_t size) {
 
         char *post_data = NULL;
         if(size == 0) {
-            post_data = cJSON_Print(message);
+            post_data = cJSON_PrintUnformatted(message);
         } else {
             post_data = cJSON_PrintBuffered(message, size, 1);
             // post_data = (char*)malloc(sizeof(char)*size);
