@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstring>
 #include <string>
 
 #include <esp_log.h>
@@ -135,6 +136,67 @@ esp_err_t LDM::HTTP_Client::postFormattedJSON(char *message) {
         }
     } else {
         ESP_LOGE(HTTP_TAG, "Formatted Message is NULL");
+    }
+
+    // cleanup http client
+    err = esp_http_client_cleanup(this->client);
+    if(err != ESP_OK) {
+        ESP_LOGE(HTTP_TAG, "Failed to clean up http client: %s", esp_err_to_name(err));
+    }
+    this->client = NULL;
+
+    return err;
+}
+
+esp_err_t LDM::HTTP_Client::postBuffer(const uint8_t *buffer, int32_t buffer_len, char* content_type) {
+    esp_err_t err = ESP_OK;
+
+    ESP_LOGI(HTTP_TAG, "Endpoint URL Destination: %s", this->config.url);
+
+    // initialize http client
+    this->client = esp_http_client_init(&this->config);
+    if(this->client == NULL) {
+        ESP_LOGE(HTTP_TAG, "Failed to initialize http client: %s", esp_err_to_name(err));
+        return ESP_FAIL;
+    }
+
+    int32_t bytes_written = -1;
+
+    if(buffer != NULL) {
+
+        // set headers
+        esp_http_client_set_method(this->client, HTTP_METHOD_POST);
+        if(content_type != NULL) {
+            esp_http_client_set_header(this->client, "Content-Type", content_type);
+            if(std::strcmp(content_type, CONTENT_TYPE_IMAGE) == 0) { // set content disposition if image
+                esp_http_client_set_header(this->client, "Content-Disposition", "inline; filename=capture.jpg");
+            }
+        }
+
+        // open buffer for writing
+        err = esp_http_client_open(this->client, buffer_len);
+        if(err != ESP_OK) {
+            ESP_LOGE(HTTP_TAG, "Failed to open http client buffer: %s", esp_err_to_name(err));
+            return ESP_FAIL;
+        }
+
+        // write buffer
+        bytes_written = esp_http_client_write(this->client, (const char*)buffer, buffer_len);
+        if(bytes_written != buffer_len) {
+            ESP_LOGE(HTTP_TAG, "Only %d of %d bytes written", bytes_written, buffer_len);
+        }
+
+        // post JSON message
+        err = esp_http_client_perform(this->client);
+        if(err == ESP_OK) {
+            ESP_LOGI(HTTP_TAG, "HTTP_Client POST Status = %d, content_length = %d",
+                    esp_http_client_get_status_code(this->client),
+                    esp_http_client_get_content_length(this->client));
+        } else {
+            ESP_LOGE(HTTP_TAG, "HTTP_Client POST request failed: %s", esp_err_to_name(err));
+        }
+    } else {
+        ESP_LOGE(HTTP_TAG, "Buffer is NULL");
     }
 
     // cleanup http client

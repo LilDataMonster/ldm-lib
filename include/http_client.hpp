@@ -10,6 +10,8 @@
 
 #include <string>
 
+#include <http_content.hpp>
+
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 
 namespace LDM {
@@ -24,6 +26,7 @@ public:
     esp_err_t setURL(char* URL);
     esp_err_t postJSON(cJSON *message, size_t size=0);
     esp_err_t postFormattedJSON(char *message);
+    esp_err_t postBuffer(const uint8_t *buffer, int32_t buffer_len, char* content_type=NULL);
 
 private:
     std::string URL;
